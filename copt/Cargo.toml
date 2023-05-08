@@ -9,3 +9,6 @@ edition = "2021"
 tokio-util = {version = "0.7.8", features = ["codec"]}
 bytes = "1.4.0"
 anyhow = "1.0.71"
+
+[dev-dependencies]
+s7-comm = { path = ".."}
