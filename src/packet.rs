@@ -225,15 +225,16 @@ impl WriteVarJob {
             .fold(2, |len, x| len + x.bytes_len())
     }
 
-    pub(crate) fn encode(self, dst: &mut BytesMut) {
-        dst.put_u8(self.count);
-        self.parameters_item.into_iter().for_each(|x| x.encode(dst));
-        self.data_item.into_iter().for_each(|x| x.encode(dst));
-    }
     pub fn add_item(&mut self, x: (ItemRequest, DataItemVal)) {
         self.count += 1;
         self.parameters_item.push(x.0);
         self.data_item.push(x.1);
+    }
+
+    pub(crate) fn encode(self, dst: &mut BytesMut) {
+        dst.put_u8(self.count);
+        self.parameters_item.into_iter().for_each(|x| x.encode(dst));
+        self.data_item.into_iter().for_each(|x| x.encode(dst));
     }
 }
 pub struct WriteVarAckData {
@@ -247,11 +248,27 @@ impl WriteVarAckData {
     }
 }
 
+#[derive(Default)]
 pub struct ReadVarJob {
     count: u8,
     parameters_item: Vec<ItemRequest>,
 }
 impl ReadVarJob {
+    pub fn bytes_len_data(&self) -> u16 {
+        0
+    }
+
+    pub fn bytes_len_parameter(&self) -> u16 {
+        self.parameters_item
+            .iter()
+            .fold(2, |len, x| len + x.bytes_len())
+    }
+
+    pub fn add_item(&mut self, x: ItemRequest) {
+        self.count += 1;
+        self.parameters_item.push(x);
+    }
+
     pub(crate) fn encode(self, dst: &mut BytesMut) {
         dst.put_u8(self.count);
         self.parameters_item.into_iter().for_each(|x| x.encode(dst));
