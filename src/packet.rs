@@ -207,6 +207,7 @@ impl AckData {
 }
 //////////////////////////////////////
 
+#[derive(Default)]
 pub struct WriteVarJob {
     count: u8,
     parameters_item: Vec<ItemRequest>,
@@ -214,10 +215,25 @@ pub struct WriteVarJob {
 }
 
 impl WriteVarJob {
+    pub fn bytes_len_data(&self) -> u16 {
+        self.data_item.iter().fold(0, |len, x| len + x.bytes_len())
+    }
+
+    pub fn bytes_len_parameter(&self) -> u16 {
+        self.parameters_item
+            .iter()
+            .fold(2, |len, x| len + x.bytes_len())
+    }
+
     pub(crate) fn encode(self, dst: &mut BytesMut) {
         dst.put_u8(self.count);
         self.parameters_item.into_iter().for_each(|x| x.encode(dst));
         self.data_item.into_iter().for_each(|x| x.encode(dst));
+    }
+    pub fn add_item(&mut self, x: (ItemRequest, DataItemVal)) {
+        self.count += 1;
+        self.parameters_item.push(x.0);
+        self.data_item.push(x.1);
     }
 }
 pub struct WriteVarAckData {
@@ -309,6 +325,26 @@ pub struct ItemRequest {
 }
 
 impl ItemRequest {
+    pub fn init_db_byte(db_number: u16, byte_addr: u16, bit_addr: u8, length: u16) -> Self {
+        Self {
+            variable_specification: 0x12,
+            follow_length: 10,
+            syntax_id: Syntax::S7Any,
+            transport_size_type: TransportSize::Byte,
+            length,
+            db_number: DbNumber::DbNumber(db_number),
+            area: Area::DataBlocks,
+            address: Address {
+                byte_addr,
+                bit_addr,
+            },
+        }
+    }
+
+    pub fn bytes_len(&self) -> u16 {
+        12
+    }
+
     fn encode(self, dst: &mut BytesMut) {
         dst.put_u8(self.variable_specification);
         dst.put_u8(self.follow_length);
@@ -368,11 +404,25 @@ pub struct DataItemVal {
     return_code: ReturnCode,
     /// always = 0x04?
     transport_size_type: TransportSize,
+    // Data Length * 8 (if not bit or timer or counter)
     length: u16,
     data: Vec<u8>,
 }
 
 impl DataItemVal {
+    pub fn init_with_bytes(data: &[u8]) -> Self {
+        Self {
+            return_code: ReturnCode::Reserved,
+            transport_size_type: TransportSize::Word,
+            length: (data.len() as u16) * 8,
+            data: data.to_vec(),
+        }
+    }
+
+    pub fn bytes_len(&self) -> u16 {
+        self.data.len() as u16 + 4
+    }
+
     fn encode(self, dst: &mut BytesMut) {
         dst.put_u8(self.return_code.into());
         dst.put_u8(self.transport_size_type.into());
