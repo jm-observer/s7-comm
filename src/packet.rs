@@ -3,6 +3,7 @@ use bytes::{Buf, BufMut, BytesMut};
 use num_enum::{FromPrimitive, IntoPrimitive, TryFromPrimitive};
 /// more info: https://github.com/wireshark/wireshark/blob/master/epan/dissectors/packet-s7comm.c
 
+#[derive(Debug, Eq, PartialEq)]
 pub enum Frame {
     /// 0x01
     Job { header: Header, job: Job },
@@ -12,7 +13,7 @@ pub enum Frame {
         ack_data: AckData,
     },
 }
-
+#[derive(Debug, Eq, PartialEq)]
 pub struct Header {
     /// 0x32?
     pub protocol_id: u8,
@@ -123,7 +124,7 @@ impl HearderAckData {
 //     /// 0x03
 //     AckData = 0x03,
 // }
-
+#[derive(Debug, Eq, PartialEq)]
 pub enum Job {
     /// 0xf0
     SetupCommunication(SetupCommunication),
@@ -221,7 +222,7 @@ impl AckData {
 }
 //////////////////////////////////////
 
-#[derive(Default)]
+#[derive(Default, Debug, Eq, PartialEq)]
 pub struct WriteVarJob {
     count: u8,
     parameters_item: Vec<ItemRequest>,
@@ -271,7 +272,7 @@ impl WriteVarAckData {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Eq, PartialEq)]
 pub struct ReadVarJob {
     count: u8,
     parameters_item: Vec<ItemRequest>,
@@ -359,7 +360,7 @@ impl SetupCommunication {
         })
     }
 }
-
+#[derive(Debug, Eq, PartialEq)]
 pub struct ItemRequest {
     /// always = 0x12?
     variable_specification: u8,
@@ -544,7 +545,7 @@ pub enum TransportSize {
     #[num_enum(catch_all)]
     NotSupport(u8),
 }
-#[derive(IntoPrimitive, FromPrimitive)]
+#[derive(Debug, IntoPrimitive, FromPrimitive, Eq, PartialEq)]
 #[repr(u8)]
 pub enum Area {
     ProcessInput = 0x81,
@@ -557,21 +558,21 @@ pub enum Area {
     NotSupport(u8),
 }
 
-#[derive(IntoPrimitive, FromPrimitive)]
+#[derive(Debug, IntoPrimitive, FromPrimitive, Eq, PartialEq)]
 #[repr(u8)]
 pub enum Syntax {
     S7Any = 0x10,
     #[num_enum(catch_all)]
     NotSupport(u8),
 }
-#[derive(IntoPrimitive, FromPrimitive)]
+#[derive(Debug, IntoPrimitive, FromPrimitive, Eq, PartialEq)]
 #[repr(u16)]
 pub enum DbNumber {
     NotIn = 0,
     #[num_enum(catch_all)]
     DbNumber(u16),
 }
-
+#[derive(Debug, Eq, PartialEq)]
 pub struct Address {
     byte_addr: u16,
     bit_addr: u8,

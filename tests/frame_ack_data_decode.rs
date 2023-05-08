@@ -74,20 +74,16 @@ fn read_var_decode() {
     if let Ok(res) = frame_builder {
         assert!(res.is_some());
         if let Some(res) = res {
-            let Frame::AckData {
-                header, ack_data
-            } = res else {
-                unreachable!()
-            };
+            let header = HearderAckData::init(1280, 2, 8, 0, 0);
 
-            let header_right = HearderAckData::init(1280, 2, 8, 0, 0);
-            assert_eq!(header_right, header);
-
-            let ack = ReadVarAckData::default().add_response(DataItemVal::init_with_bytes(
-                ReturnCode::Success,
-                [0x00, 0x00, 0x00, 0x79].as_ref(),
+            let ack_data = AckData::ReadVar(ReadVarAckData::default().add_response(
+                DataItemVal::init_with_bytes(
+                    ReturnCode::Success,
+                    [0x00, 0x00, 0x00, 0x79].as_ref(),
+                ),
             ));
-            assert_eq!(ack_data, AckData::ReadVar(ack));
+
+            assert_eq!(res, Frame::AckData { header, ack_data });
         }
     }
 }
