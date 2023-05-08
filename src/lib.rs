@@ -1,9 +1,11 @@
 pub mod builder;
 mod packet;
 
-use crate::packet::{AckData, Frame, Header, HearderAckData, Job};
+// use crate::packet::{AckData, Frame, Header, HearderAckData, Job};
 use anyhow::{bail, Error};
 use bytes::{BufMut, BytesMut};
+use log::debug;
+pub use packet::*;
 use tokio_util::codec::{Decoder, Encoder};
 
 pub struct S7CommEncoder;
@@ -92,10 +94,10 @@ impl Decoder for S7CommDecoder {
         let Some(rosctr) = src.get(1) else {
             unreachable!()
         };
-        let (Some(parameter_0), Some(parameter_1)) = (src.get(1), src.get(1)) else {
+        let (Some(parameter_0), Some(parameter_1)) = (src.get(6), src.get(7)) else {
             unreachable!()
         };
-        let (Some(data_0), Some(data_1)) = (src.get(1), src.get(1)) else {
+        let (Some(data_0), Some(data_1)) = (src.get(8), src.get(9)) else {
             unreachable!()
         };
 
@@ -114,6 +116,10 @@ impl Decoder for S7CommDecoder {
             3 => {
                 // ack data
                 if src.len() < (12 + parameter_length + data_length) as usize {
+                    debug!(
+                        "parameter_length: {}, data_length: {}",
+                        parameter_length, data_length
+                    );
                     return Ok(None);
                 }
                 let header = HearderAckData::decode(src);

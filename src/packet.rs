@@ -61,18 +61,37 @@ impl Header {
     }
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub struct HearderAckData {
     /// 0x32?
-    pub protocol_id: u8,
-    pub reserved: u16,
-    pub pdu_ref: u16,
-    pub parameter_len: u16,
-    pub data_len: u16,
-    pub error_class: u8,
-    pub error_code: u8,
+    pub(crate) protocol_id: u8,
+    pub(crate) reserved: u16,
+    pub(crate) pdu_ref: u16,
+    pub(crate) parameter_len: u16,
+    pub(crate) data_len: u16,
+    pub(crate) error_class: u8,
+    pub(crate) error_code: u8,
 }
 
 impl HearderAckData {
+    pub fn init(
+        pdu_ref: u16,
+        parameter_len: u16,
+        data_len: u16,
+        error_class: u8,
+        error_code: u8,
+    ) -> Self {
+        Self {
+            protocol_id: 0x32,
+            reserved: 0,
+            pdu_ref,
+            parameter_len,
+            data_len,
+            error_class,
+            error_code,
+        }
+    }
+
     pub(crate) fn decode(src: &mut BytesMut) -> Self {
         let protocol_id = src.get_u8();
         src.get_u8();
@@ -156,6 +175,7 @@ impl Job {
     }
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub enum AckData {
     /// 0xf0
     SetupCommunication(SetupCommunication),
@@ -175,25 +195,19 @@ impl AckData {
                 for _ in 0..count {
                     data_item.push(DataItemVal::decode(src)?);
                 }
-                Ok(Self::ReadVar(ReadVarAckData {
-                    count: 0,
-                    data_item,
-                }))
+                Ok(Self::ReadVar(ReadVarAckData { count, data_item }))
             }
             0x05 => {
                 let count = src.get_u8();
-                let mut parameters_item = Vec::with_capacity(count as usize);
-                for _ in 0..count {
-                    parameters_item.push(ItemRequest::decode(src)?);
-                }
+                // let mut parameters_item = Vec::with_capacity(count as usize);
+                // for _ in 0..count {
+                //     parameters_item.push(ItemRequest::decode(src)?);
+                // }
                 let mut data_item = Vec::with_capacity(count as usize);
                 for _ in 0..count {
                     data_item.push(DataItemWriteResponse::decode(src)?);
                 }
-                Ok(Self::WriteVar(WriteVarAckData {
-                    count: 0,
-                    data_item,
-                }))
+                Ok(Self::WriteVar(WriteVarAckData { count, data_item }))
             }
             0xf0 => {
                 let data = SetupCommunication::decode(src)?;
@@ -237,11 +251,20 @@ impl WriteVarJob {
         self.data_item.into_iter().for_each(|x| x.encode(dst));
     }
 }
+
+#[derive(Debug, Eq, PartialEq, Default)]
 pub struct WriteVarAckData {
     count: u8,
     data_item: Vec<DataItemWriteResponse>,
 }
+
 impl WriteVarAckData {
+    pub fn add_response(mut self, response: DataItemWriteResponse) -> Self {
+        self.count += 1;
+        self.data_item.push(response);
+        self
+    }
+
     pub(crate) fn encode(self, dst: &mut BytesMut) {
         dst.put_u8(self.count);
         self.data_item.into_iter().for_each(|x| x.encode(dst));
@@ -275,17 +298,25 @@ impl ReadVarJob {
     }
 }
 
+#[derive(Debug, Eq, PartialEq, Default)]
 pub struct ReadVarAckData {
     count: u8,
     data_item: Vec<DataItemVal>,
 }
 impl ReadVarAckData {
+    pub fn add_response(mut self, value: DataItemVal) -> Self {
+        self.count += 1;
+        self.data_item.push(value);
+        self
+    }
+
     pub(crate) fn encode(self, dst: &mut BytesMut) {
         dst.put_u8(self.count);
         self.data_item.into_iter().for_each(|x| x.encode(dst));
     }
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub struct SetupCommunication {
     reserved: u8,
     max_amq_calling: u16,
@@ -398,11 +429,16 @@ impl ItemRequest {
     }
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub struct DataItemWriteResponse {
     return_code: ReturnCode,
 }
 
 impl DataItemWriteResponse {
+    pub fn init(return_code: ReturnCode) -> Self {
+        Self { return_code }
+    }
+
     fn encode(self, dst: &mut BytesMut) {
         dst.put_u8(self.return_code.into());
     }
@@ -416,7 +452,7 @@ impl DataItemWriteResponse {
         })
     }
 }
-
+#[derive(Debug, Eq, PartialEq)]
 pub struct DataItemVal {
     return_code: ReturnCode,
     /// always = 0x04?
@@ -427,9 +463,9 @@ pub struct DataItemVal {
 }
 
 impl DataItemVal {
-    pub fn init_with_bytes(data: &[u8]) -> Self {
+    pub fn init_with_bytes(return_code: ReturnCode, data: &[u8]) -> Self {
         Self {
-            return_code: ReturnCode::Reserved,
+            return_code,
             transport_size_type: TransportSize::Word,
             length: (data.len() as u16) * 8,
             data: data.to_vec(),
@@ -438,6 +474,18 @@ impl DataItemVal {
 
     pub fn bytes_len(&self) -> u16 {
         self.data.len() as u16 + 4
+    }
+
+    fn real_bytes_len(transport_size_type: TransportSize, length: u16) -> usize {
+        match transport_size_type {
+            TransportSize::Bit | TransportSize::Counter | TransportSize::Timer => length as usize,
+            TransportSize::Byte | TransportSize::Char | TransportSize::Word => {
+                (length / 8) as usize
+            }
+            _ => {
+                todo!()
+            }
+        }
     }
 
     fn encode(self, dst: &mut BytesMut) {
@@ -454,11 +502,12 @@ impl DataItemVal {
         let return_code = ReturnCode::try_from(src.get_u8())?;
         let transport_size_type = TransportSize::from(src.get_u8());
         let length = src.get_u16();
-        if src.len() < length as usize {
+        let bytes_len = Self::real_bytes_len(transport_size_type, length);
+        if src.len() < bytes_len {
             bail!("todo")
         }
-        let mut data = Vec::with_capacity(length as usize);
-        for _ in 0..length {
+        let mut data = Vec::with_capacity(bytes_len);
+        for _ in 0..bytes_len {
             data.push(src.get_u8())
         }
         Ok(Self {
@@ -470,7 +519,7 @@ impl DataItemVal {
     }
 }
 
-#[derive(IntoPrimitive, TryFromPrimitive)]
+#[derive(Debug, IntoPrimitive, TryFromPrimitive, Eq, PartialEq)]
 #[repr(u8)]
 pub enum ReturnCode {
     /// 0
@@ -478,7 +527,7 @@ pub enum ReturnCode {
     /// 0xff
     Success = 0xff,
 }
-#[derive(IntoPrimitive, FromPrimitive)]
+#[derive(Debug, Copy, Clone, IntoPrimitive, Eq, FromPrimitive, PartialEq)]
 /// ?
 #[repr(u8)]
 pub enum TransportSize {

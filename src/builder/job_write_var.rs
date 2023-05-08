@@ -1,6 +1,5 @@
-use crate::packet::{
-    DataItemVal, Frame, Header, ItemRequest, Job, WriteVarJob,
-};
+use crate::packet::{DataItemVal, Frame, Header, ItemRequest, Job, WriteVarJob};
+use crate::ReturnCode;
 
 #[derive(Default)]
 pub struct FrameJobWriteVarBuilder {
@@ -18,15 +17,9 @@ impl FrameJobWriteVarBuilder {
         self
     }
 
-    pub fn write_db_bytes(
-        self,
-        db_number: u16,
-        byte_addr: u16,
-        bit_addr: u8,
-        data: &[u8],
-    ) -> Self {
+    pub fn write_db_bytes(self, db_number: u16, byte_addr: u16, bit_addr: u8, data: &[u8]) -> Self {
         let req = ItemRequest::init_db_byte(db_number, byte_addr, bit_addr, data.len() as u16);
-        let data_val = DataItemVal::init_with_bytes(data);
+        let data_val = DataItemVal::init_with_bytes(ReturnCode::Reserved, data);
         self.add_item((req, data_val))
     }
 
