@@ -1,4 +1,6 @@
+use crate::builder::ConnectBuilder;
 use crate::error::*;
+use crate::DtDataBuilder;
 use bytes::{Buf, BufMut, BytesMut};
 use std::fmt::Debug;
 
@@ -8,6 +10,14 @@ pub struct CoptFrame<F: Debug + Eq + PartialEq> {
 }
 
 impl<F: Debug + Eq + PartialEq> CoptFrame<F> {
+    pub fn builder_of_dt_data(payload: F) -> DtDataBuilder<F> {
+        DtDataBuilder::new(payload)
+    }
+
+    pub fn builder_of_connect() -> ConnectBuilder {
+        ConnectBuilder::default()
+    }
+
     pub fn length(&self) -> u8 {
         self.pdu_type.length()
     }

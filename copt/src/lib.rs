@@ -1,11 +1,14 @@
+use crate::builder::*;
 use crate::error::*;
-use crate::packet::{ConnectComm, CoptFrame, DtData, PduType};
+pub use crate::packet::CoptFrame;
+use crate::packet::{ConnectComm, DtData, PduType};
 use bytes::{Buf, BufMut, BytesMut};
 use std::fmt::Debug;
 use tokio_util::codec::{Decoder, Encoder};
 
-mod error;
-pub mod packet;
+pub mod builder;
+pub mod error;
+mod packet;
 
 pub struct CoptEncoder<E>(pub E);
 pub struct CoptDecoder<D>(pub D);
@@ -24,18 +27,19 @@ where
         dst.put_u8(item.length());
         match item.pdu_type {
             PduType::ConnectRequest(conn) => {
-                dst.put_u8(0x0e);
+                dst.put_u8(0xe0);
                 conn.encode(dst);
                 Ok(())
             }
             PduType::ConnectConfirm(conn) => {
-                dst.put_u8(0x0d);
+                dst.put_u8(0xd0);
                 conn.encode(dst);
                 Ok(())
             }
             PduType::DtData(conn) => {
-                dst.put_u8(0x0f);
-                let merge = conn.tpdu_number >> 1 & if conn.last_data_unit { 0b1000000 } else { 0 };
+                dst.put_u8(0xf0);
+                let merge =
+                    conn.tpdu_number >> 1 | if conn.last_data_unit { 0b1000_0000 } else { 0 };
                 dst.put_u8(merge);
                 Ok(self.0.encode(conn.payload, dst)?)
             }
