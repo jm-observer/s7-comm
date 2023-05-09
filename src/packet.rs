@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use crate::error::*;
 use bytes::{Buf, BufMut, BytesMut};
 use num_enum::{FromPrimitive, IntoPrimitive, TryFromPrimitive};
 /// more info: https://github.com/wireshark/wireshark/blob/master/epan/dissectors/packet-s7comm.c
@@ -169,9 +169,7 @@ impl Job {
                 let data = SetupCommunication::decode(src)?;
                 Ok(Self::SetupCommunication(data))
             }
-            _ => {
-                bail!("not support function: {}", function);
-            }
+            _ => Err(Error::Error(format!("not support function: {}", function))),
         }
     }
 }
@@ -214,9 +212,7 @@ impl AckData {
                 let data = SetupCommunication::decode(src)?;
                 Ok(Self::SetupCommunication(data))
             }
-            _ => {
-                bail!("not support function: {}", function);
-            }
+            _ => Err(Error::Error(format!("not support function: {}", function))),
         }
     }
 }
@@ -346,7 +342,9 @@ impl SetupCommunication {
 
     fn decode(src: &mut BytesMut) -> Result<Self> {
         if src.len() < Self::len() {
-            bail!("data of SetupCommunication not enough");
+            return Err(Error::Error(
+                "data of SetupCommunication not enough".to_string(),
+            ));
         }
         let reserved = src.get_u8();
         let max_amq_calling = src.get_u16();
@@ -407,7 +405,7 @@ impl ItemRequest {
 
     fn decode(src: &mut BytesMut) -> Result<Self> {
         if src.len() < 12 {
-            bail!("todo");
+            return Err(Error::Error("todo".to_string()));
         }
         let variable_specification = src.get_u8();
         let follow_length = src.get_u8();
@@ -446,7 +444,7 @@ impl DataItemWriteResponse {
 
     fn decode(src: &mut BytesMut) -> Result<Self> {
         if src.len() == 0 {
-            bail!("todo");
+            return Err(Error::Error("todo".to_string()));
         }
         Ok(Self {
             return_code: ReturnCode::try_from(src.get_u8())?,
@@ -498,14 +496,14 @@ impl DataItemVal {
 
     fn decode(src: &mut BytesMut) -> Result<Self> {
         if src.len() < 4 {
-            bail!("todo")
+            return Err(Error::Error("todo".to_string()));
         }
         let return_code = ReturnCode::try_from(src.get_u8())?;
         let transport_size_type = TransportSize::from(src.get_u8());
         let length = src.get_u16();
         let bytes_len = Self::real_bytes_len(transport_size_type, length);
         if src.len() < bytes_len {
-            bail!("todo")
+            return Err(Error::Error("todo".to_string()));
         }
         let mut data = Vec::with_capacity(bytes_len);
         for _ in 0..bytes_len {

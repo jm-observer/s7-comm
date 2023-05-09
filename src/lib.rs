@@ -1,9 +1,10 @@
 pub mod builder;
+mod error;
 mod packet;
 
 // use crate::packet::{AckData, Frame, Header, HearderAckData, Job};
-use anyhow::{bail, Error};
 use bytes::{BufMut, BytesMut};
+pub use error::*;
 use log::debug;
 pub use packet::*;
 use tokio_util::codec::{Decoder, Encoder};
@@ -14,7 +15,7 @@ pub struct S7CommDecoder;
 impl Encoder<Frame> for S7CommEncoder {
     type Error = Error;
 
-    fn encode(&mut self, item: Frame, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: Frame, dst: &mut BytesMut) -> std::result::Result<(), Self::Error> {
         match item {
             Frame::Job { header, job } => {
                 let Header {
@@ -87,7 +88,10 @@ impl Decoder for S7CommDecoder {
     type Item = Frame;
     type Error = Error;
 
-    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+    fn decode(
+        &mut self,
+        src: &mut BytesMut,
+    ) -> std::result::Result<Option<Self::Item>, Self::Error> {
         if src.len() < 10 {
             return Ok(None);
         }
@@ -126,9 +130,7 @@ impl Decoder for S7CommDecoder {
                 let ack_data = AckData::decode(src)?;
                 Ok(Some(Frame::AckData { header, ack_data }))
             }
-            _ => {
-                bail!("not support rosctr: {}", rosctr);
-            }
+            _ => Err(Error::Error(format!("not support rosctr: {}", rosctr))),
         }
     }
 }
