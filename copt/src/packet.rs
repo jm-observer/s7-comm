@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use crate::error::*;
 use bytes::{Buf, BufMut, BytesMut};
 use std::fmt::Debug;
 
@@ -55,7 +55,7 @@ impl ConnectComm {
     }
     pub(crate) fn decode(src: &mut BytesMut) -> Result<Self> {
         if src.len() < 5 {
-            bail!("data not enough");
+            return Err(Error::Error("data not enough".to_string()));
         }
         let destination_ref = [src.get_u8(), src.get_u8()];
         let source_ref = [src.get_u8(), src.get_u8()];
@@ -111,12 +111,12 @@ impl Parameter {
             return Ok(None);
         }
         let (Some(ty), Some(length)) = (dst.get(0), dst.get(1)) else {
-            bail!("data not enough");
+            return Err(Error::Error("data not enough".to_string()));
         };
         let length = (length + 2) as usize;
         let ty = *ty;
         if dst.len() < length {
-            bail!("data not enough");
+            return Err(Error::Error("data not enough".to_string()));
         }
         let data = dst.split_to(length).split_off(2);
         match ty {
@@ -124,7 +124,7 @@ impl Parameter {
             0xc1 => Ok(Some(Self::TpduSize(data.to_vec()))),
             0xc2 => Ok(Some(Self::TpduSize(data.to_vec()))),
             _ => {
-                bail!("not support parameter: {}", ty);
+                return Err(Error::Error(format!("not support parameter: {}", ty)));
             }
         }
     }

@@ -1,22 +1,26 @@
+use crate::error::*;
 use crate::packet::{ConnectComm, CoptFrame, DtData, PduType};
-use anyhow::{bail, Error};
 use bytes::{Buf, BufMut, BytesMut};
 use std::fmt::Debug;
 use tokio_util::codec::{Decoder, Encoder};
 
+mod error;
 pub mod packet;
 
 pub struct CoptEncoder<E>(pub E);
 pub struct CoptDecoder<D>(pub D);
 
-impl<F: Debug + Eq + PartialEq, E: Encoder<F, Error = Error>> Encoder<CoptFrame<F>>
-    for CoptEncoder<E>
-// where
-//     <E as Encoder<F>>::Error: Into<Error> + Send + Sync + 'static,
+impl<F: Debug + Eq + PartialEq, E: Encoder<F>> Encoder<CoptFrame<F>> for CoptEncoder<E>
+where
+    <E as Encoder<F>>::Error: ToCoptError + Send + Sync + 'static,
 {
     type Error = Error;
 
-    fn encode(&mut self, item: CoptFrame<F>, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(
+        &mut self,
+        item: CoptFrame<F>,
+        dst: &mut BytesMut,
+    ) -> std::result::Result<(), Self::Error> {
         dst.put_u8(item.length());
         match item.pdu_type {
             PduType::ConnectRequest(conn) => {
@@ -46,7 +50,10 @@ impl<F: Debug + Eq + PartialEq, D: Decoder<Item = F, Error = Error>> Decoder for
     type Item = CoptFrame<F>;
     type Error = Error;
 
-    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+    fn decode(
+        &mut self,
+        src: &mut BytesMut,
+    ) -> std::result::Result<Option<Self::Item>, Self::Error> {
         let (Some(length), Some(pdu_type)) = (src.get(0), src.get(1)) else {
             return Ok(None)
         };
@@ -72,7 +79,8 @@ impl<F: Debug + Eq + PartialEq, D: Decoder<Item = F, Error = Error>> Decoder for
                 let mut sub_src = src.clone().split_off(length);
                 let pre_length = sub_src.len();
                 let Some(f) = self.0.decode(&mut sub_src)? else {
-                    bail!("decode fail")
+                    return Err(Error::Error("decode fail".to_string()));
+
                 };
                 let sub_length = pre_length - sub_src.len();
                 let mut src = src.split_to(length + sub_length).split_off(2);
@@ -88,7 +96,7 @@ impl<F: Debug + Eq + PartialEq, D: Decoder<Item = F, Error = Error>> Decoder for
                 }))
             }
             _ => {
-                bail!("not support pdu type: {}", pdu_type);
+                return Err(Error::Error(format!("not support pdu type: {}", pdu_type)));
             }
         }
     }
