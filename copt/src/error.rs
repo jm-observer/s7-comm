@@ -1,5 +1,6 @@
 use std::io;
 use thiserror::Error;
+use tpkt::ToTpktError;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -21,5 +22,11 @@ pub trait ToCoptError {
 impl<T: ToCoptError> From<T> for Error {
     fn from(value: T) -> Self {
         value.to_err()
+    }
+}
+
+impl ToTpktError for Error {
+    fn to_err(self) -> tpkt::Error {
+        tpkt::Error::Error(self.to_string())
     }
 }
