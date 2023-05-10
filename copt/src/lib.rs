@@ -47,9 +47,9 @@ where
     }
 }
 
-impl<F: Debug + Eq + PartialEq, D: Decoder<Item = F, Error = Error>> Decoder for CoptDecoder<D>
-// where
-//     <D as Decoder>::Error: Into<Error> + std::error::Error + Send + Sync + 'static,
+impl<F: Debug + Eq + PartialEq, D: Decoder<Item = F>> Decoder for CoptDecoder<D>
+where
+    <D as Decoder>::Error: ToCoptError + Send + Sync + 'static,
 {
     type Item = CoptFrame<F>;
     type Error = Error;
