@@ -1,7 +1,7 @@
 use crate::builder::*;
 use crate::error::*;
-pub use crate::packet::CoptFrame;
 use crate::packet::{ConnectComm, DtData, PduType};
+pub use crate::packet::{CoptFrame, Parameter, TpduSize};
 use bytes::{Buf, BufMut, BytesMut};
 use std::fmt::Debug;
 use tokio_util::codec::{Decoder, Encoder};

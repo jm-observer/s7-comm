@@ -2,6 +2,7 @@ use crate::builder::ConnectBuilder;
 use crate::error::*;
 use crate::DtDataBuilder;
 use bytes::{Buf, BufMut, BytesMut};
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 use std::fmt::Debug;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -19,7 +20,7 @@ impl<F: Debug + Eq + PartialEq> CoptFrame<F> {
     }
 
     pub fn length(&self) -> u8 {
-        self.pdu_type.length()
+        self.pdu_type.length() + 1
     }
 }
 
@@ -98,20 +99,53 @@ impl ConnectComm {
         self.parameters.iter().for_each(|x| x.encode(dst));
     }
 }
+
+/// https://datatracker.ietf.org/doc/html/rfc905 13.3.4
 #[derive(Debug, Eq, PartialEq)]
 pub enum Parameter {
     /// 0xc0
-    TpduSize(Vec<u8>),
+    ///            0000 1101  8192 octets (not allowed in Class 0)
+    //             0000 1100  4096 octets (not allowed in Class 0)
+    //             0000 1011  2048 octets
+    //             0000 1010  1024 octets
+    //             0000 1001   512 octets
+    //             0000 1000   256 octets
+    //             0000 0111   128 octets
+    TpduSize(TpduSize),
     /// 0xc1
     SrcTsap(Vec<u8>),
     /// 0xc2
     DstTsap(Vec<u8>),
 }
 
+#[derive(Debug, Clone, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
+#[repr(u8)]
+pub enum TpduSize {
+    L8192 = 0b0000_1101,
+    L4096 = 0b0000_1100,
+    L2048 = 0b0000_1011,
+    L1024 = 0b0000_1010,
+    L512 = 0b0000_1001,
+    L256 = 0b0000_1000,
+    L128 = 0b0000_0111,
+}
+
 impl Parameter {
+    pub fn new_dst_tsap(data: Vec<u8>) -> Self {
+        Self::DstTsap(data)
+    }
+
+    pub fn new_src_tsap(data: Vec<u8>) -> Self {
+        Self::SrcTsap(data)
+    }
+
+    pub fn new_tpdu_size(size: TpduSize) -> Self {
+        Self::TpduSize(size)
+    }
+
     pub fn length(&self) -> u8 {
         match self {
-            Parameter::TpduSize(data) => 2 + data.len() as u8,
+            Parameter::TpduSize(_) => 3u8,
             Parameter::SrcTsap(data) => 2 + data.len() as u8,
             Parameter::DstTsap(data) => 2 + data.len() as u8,
         }
@@ -128,11 +162,14 @@ impl Parameter {
         if dst.len() < length {
             return Err(Error::Error("data not enough".to_string()));
         }
-        let data = dst.split_to(length).split_off(2);
+        let mut data = dst.split_to(length).split_off(2);
         match ty {
-            0xc0 => Ok(Some(Self::TpduSize(data.to_vec()))),
-            0xc1 => Ok(Some(Self::TpduSize(data.to_vec()))),
-            0xc2 => Ok(Some(Self::TpduSize(data.to_vec()))),
+            0xc0 => {
+                let size = data.get_u8();
+                Ok(Some(Self::TpduSize(size.try_into()?)))
+            }
+            0xc1 => Ok(Some(Self::SrcTsap(data.to_vec()))),
+            0xc2 => Ok(Some(Self::DstTsap(data.to_vec()))),
             _ => {
                 return Err(Error::Error(format!("not support parameter: {}", ty)));
             }
@@ -142,8 +179,8 @@ impl Parameter {
         match self {
             Parameter::TpduSize(data) => {
                 dst.put_u8(0xc0);
-                dst.put_u8(data.len() as u8);
-                dst.extend_from_slice(data.as_ref())
+                dst.put_u8(1u8);
+                dst.put_u8(data.clone().into())
             }
             Parameter::SrcTsap(data) => {
                 dst.put_u8(0xc1);
