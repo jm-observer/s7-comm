@@ -1,17 +1,32 @@
 use crate::packet::{ConnectComm, CoptFrame, Parameter, PduType};
 use std::fmt::Debug;
+use std::marker::PhantomData;
 
-#[derive(Default)]
-pub struct ConnectBuilder {
+pub struct ConnectBuilder<F> {
     destination_ref: [u8; 2],
     source_ref: [u8; 2],
     class: u8,
     extended_formats: bool,
     no_explicit_flow_control: bool,
     parameters: Vec<Parameter>,
+    phantom_data: PhantomData<F>,
 }
 
-impl ConnectBuilder {
+impl<F> Default for ConnectBuilder<F> {
+    fn default() -> Self {
+        Self {
+            destination_ref: [0, 0],
+            source_ref: [0, 0],
+            class: 0,
+            extended_formats: false,
+            no_explicit_flow_control: false,
+            parameters: vec![],
+            phantom_data: PhantomData::default(),
+        }
+    }
+}
+
+impl<F: Debug + Eq + PartialEq> ConnectBuilder<F> {
     pub fn source_ref(mut self, source_ref: [u8; 2]) -> Self {
         self.source_ref = source_ref;
         self
@@ -39,7 +54,7 @@ impl ConnectBuilder {
         self
     }
 
-    pub fn build_to_request<F: Debug + Eq + PartialEq>(self) -> CoptFrame<F> {
+    pub fn build_to_request(self) -> CoptFrame<F> {
         let Self {
             destination_ref,
             source_ref,
@@ -47,6 +62,7 @@ impl ConnectBuilder {
             extended_formats,
             no_explicit_flow_control,
             parameters,
+            ..
         } = self;
         CoptFrame {
             pdu_type: PduType::ConnectRequest(ConnectComm {
@@ -60,7 +76,7 @@ impl ConnectBuilder {
         }
     }
 
-    pub fn build_to_confirm<F: Debug + Eq + PartialEq>(self) -> CoptFrame<F> {
+    pub fn build_to_confirm(self) -> CoptFrame<F> {
         let Self {
             destination_ref,
             source_ref,
@@ -68,6 +84,7 @@ impl ConnectBuilder {
             extended_formats,
             no_explicit_flow_control,
             parameters,
+            ..
         } = self;
         CoptFrame {
             pdu_type: PduType::ConnectConfirm(ConnectComm {

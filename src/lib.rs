@@ -9,7 +9,12 @@ use log::debug;
 pub use packet::*;
 use tokio_util::codec::{Decoder, Encoder};
 
+pub type CoptFrame = copt::CoptFrame<Frame>;
+
+#[derive(Default)]
 pub struct S7CommEncoder;
+
+#[derive(Default)]
 pub struct S7CommDecoder;
 
 impl Encoder<Frame> for S7CommEncoder {

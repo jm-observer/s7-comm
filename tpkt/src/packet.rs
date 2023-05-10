@@ -1,3 +1,7 @@
+use crate::{ToTpktError, TpktEncoder};
+use bytes::BytesMut;
+use tokio_util::codec::Encoder;
+
 #[derive(Debug, Eq, PartialEq)]
 pub struct TpktFrame<F> {
     pub(crate) version: u8,
@@ -13,5 +17,16 @@ impl<F> TpktFrame<F> {
     }
     pub fn version_mut(&mut self, version: u8) {
         self.version = version;
+    }
+
+    pub fn to_bytes<E>(self) -> Result<BytesMut, crate::error::Error>
+    where
+        E: Encoder<F> + Default,
+        <E as Encoder<F>>::Error: ToTpktError + Send + Sync + 'static,
+    {
+        let mut encoder = TpktEncoder(E::default());
+        let mut dst = BytesMut::new();
+        encoder.encode(self, &mut dst)?;
+        Ok(dst)
     }
 }

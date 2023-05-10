@@ -15,8 +15,8 @@ impl<F: Debug + Eq + PartialEq> CoptFrame<F> {
         DtDataBuilder::new(payload)
     }
 
-    pub fn builder_of_connect() -> ConnectBuilder {
-        ConnectBuilder::default()
+    pub fn builder_of_connect() -> ConnectBuilder<F> {
+        ConnectBuilder::<F>::default()
     }
 
     pub fn length(&self) -> u8 {

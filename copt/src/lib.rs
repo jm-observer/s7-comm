@@ -10,6 +10,7 @@ pub mod builder;
 pub mod error;
 mod packet;
 
+#[derive(Default)]
 pub struct CoptEncoder<E>(pub E);
 pub struct CoptDecoder<D>(pub D);
 

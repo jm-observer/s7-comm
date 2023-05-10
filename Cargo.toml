@@ -16,3 +16,7 @@ log = "0.4.17"
 thiserror = "1.0.40"
 copt = {path = "copt"}
 tpkt = {path = "tpkt"}
+
+[dev-dependencies]
+tokio = {version = "1.28.0", features = ["full"]}
+anyhow = "1.0.71"
