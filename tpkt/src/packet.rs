@@ -19,6 +19,10 @@ impl<F> TpktFrame<F> {
         self.version = version;
     }
 
+    pub fn payload(self) -> F {
+        self.payload
+    }
+
     pub fn to_bytes<E>(self) -> Result<BytesMut, crate::error::Error>
     where
         E: Encoder<F> + Default,

@@ -11,13 +11,13 @@ impl FrameJobReadVarBuilder {
         self.pdu_ref = pdu_ref;
         self
     }
-    pub fn add_item(mut self, item: ItemRequest) -> Self {
+    fn add_item(mut self, item: ItemRequest) -> Self {
         self.items.push(item);
         self
     }
 
-    pub fn read_db_bytes(self, db_number: u16, byte_addr: u16, bit_addr: u8, data: &[u8]) -> Self {
-        let req = ItemRequest::init_db_byte(db_number, byte_addr, bit_addr, data.len() as u16);
+    pub fn read_db_bytes(self, db_number: u16, byte_addr: u16, len: u16) -> Self {
+        let req = ItemRequest::init_db_byte(db_number, byte_addr, 0, len);
         self.add_item(req)
     }
 

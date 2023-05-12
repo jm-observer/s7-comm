@@ -45,9 +45,23 @@ impl<F: Debug + Eq + PartialEq> PduType<F> {
 }
 #[derive(Debug, Eq, PartialEq)]
 pub struct DtData<F: Debug + Eq + PartialEq> {
-    pub tpdu_number: u8,
-    pub last_data_unit: bool,
-    pub payload: F,
+    pub(crate) tpdu_number: u8,
+    pub(crate) last_data_unit: bool,
+    pub(crate) payload: F,
+}
+
+impl<F: Debug + Eq + PartialEq> DtData<F> {
+    pub fn tpdu_number(&self) -> u8 {
+        self.tpdu_number
+    }
+
+    pub fn last_data_unit(&self) -> bool {
+        self.last_data_unit
+    }
+
+    pub fn payload(self) -> F {
+        self.payload
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]

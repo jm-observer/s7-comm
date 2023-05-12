@@ -1,3 +1,4 @@
+use crate::builder::*;
 use crate::error::*;
 use bytes::{Buf, BufMut, BytesMut};
 use num_enum::{FromPrimitive, IntoPrimitive, TryFromPrimitive};
@@ -13,6 +14,21 @@ pub enum Frame {
         ack_data: AckData,
     },
 }
+
+impl Frame {
+    pub fn job_setup(pdu_ref: u16) -> FrameJobSetupBuilder {
+        FrameJobSetupBuilder::default().pdu_ref(pdu_ref)
+    }
+
+    pub fn job_write_var(pdu_ref: u16) -> FrameJobWriteVarBuilder {
+        FrameJobWriteVarBuilder::default().pdu_ref(pdu_ref)
+    }
+
+    pub fn job_read_var(pdu_ref: u16) -> FrameJobReadVarBuilder {
+        FrameJobReadVarBuilder::default().pdu_ref(pdu_ref)
+    }
+}
+
 #[derive(Debug, Eq, PartialEq)]
 pub struct Header {
     /// 0x32?

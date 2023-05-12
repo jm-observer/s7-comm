@@ -12,13 +12,14 @@ impl FrameJobWriteVarBuilder {
         self.pdu_ref = pdu_ref;
         self
     }
-    pub fn add_item(mut self, item: (ItemRequest, DataItemVal)) -> Self {
+    fn add_item(mut self, item: (ItemRequest, DataItemVal)) -> Self {
         self.items.push(item);
         self
     }
 
-    pub fn write_db_bytes(self, db_number: u16, byte_addr: u16, bit_addr: u8, data: &[u8]) -> Self {
-        let req = ItemRequest::init_db_byte(db_number, byte_addr, bit_addr, data.len() as u16);
+    // todo 增加其他类型。应该也可以再抽象
+    pub fn write_db_bytes(self, db_number: u16, byte_addr: u16, data: &[u8]) -> Self {
+        let req = ItemRequest::init_db_byte(db_number, byte_addr, 0, data.len() as u16);
         let data_val = DataItemVal::init_with_bytes(ReturnCode::Reserved, data);
         self.add_item((req, data_val))
     }
