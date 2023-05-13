@@ -1,4 +1,4 @@
-use crate::test_data::test_copt_data::init_copt_connect_request_frame;
+use super::test_copt_data::init_copt_connect_request_frame;
 use copt::CoptFrame;
 use s7_comm::Frame;
 use tpkt::TpktFrame;

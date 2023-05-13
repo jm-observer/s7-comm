@@ -1,4 +1,4 @@
-use crate::test_data::test_s7_comm_data::init_job_setup_frame;
+use super::test_s7_comm_data::init_job_setup_frame;
 use copt::{CoptFrame, Parameter, TpduSize};
 use s7_comm::Frame;
 

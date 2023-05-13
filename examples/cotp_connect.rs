@@ -10,8 +10,9 @@ use tpkt::{TpktDecoder, TpktFrame};
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    custom_utils::logger::logger_stdout_debug();
     let mut req =
-        tokio::net::TcpStream::connect(SocketAddr::new(IpAddr::from([127u8, 0, 0, 1]), 102))
+        tokio::net::TcpStream::connect(SocketAddr::new(IpAddr::from([10u8, 10, 12, 33]), 102))
             .await?;
 
     let mut buf = [0u8; 1000];
@@ -28,6 +29,8 @@ async fn main() -> Result<()> {
                     debug!("{:?}", comm);
                     break;
                 }
+            } else {
+                debug!("{:?}", bytes);
             }
         }
     }
@@ -130,7 +133,7 @@ fn init_s7_write() -> TpktFrame<CoptFrame> {
     TpktFrame::new(
         CoptFrame::builder_of_dt_data(
             s7_comm::Frame::job_write_var(1024)
-                .write_db_bytes(1, 300, [0u8, 0, 0, 0x79].as_ref())
+                .write_db_bytes(1, 300, [0u8, 0, 0, 0x09].as_ref())
                 .build(),
         )
         .build(0, true),

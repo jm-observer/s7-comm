@@ -1,6 +1,5 @@
 use bytes::BytesMut;
-use s7_comm::builder::FrameBuilder;
-use s7_comm::S7CommEncoder;
+use s7_comm::{Frame, S7CommEncoder};
 use tokio_util::codec::Encoder;
 
 #[test]
@@ -10,9 +9,9 @@ fn encode() {
         0x02, 0x00, 0x04, 0x00, 0x01, 0x84, 0x00, 0x09, 0x60, 0x00, 0x04, 0x00, 0x20, 0x00, 0x00,
         0x00, 0x79,
     ];
-    let frame_builder = FrameBuilder::job_write_var(1280);
+    let frame_builder = Frame::job_write_var(1280);
     let frame = frame_builder
-        .write_db_bytes(1, 300, 0, [0u8, 0, 0, 0x79].as_ref())
+        .write_db_bytes(1, 300, [0u8, 0, 0, 0x79].as_ref())
         .build();
     let mut dst = BytesMut::new();
     let mut encoder = S7CommEncoder;

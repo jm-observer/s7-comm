@@ -1,8 +1,7 @@
-use s7_comm::builder::FrameBuilder;
 use s7_comm::Frame;
 
 pub fn init_job_setup_frame() -> Frame {
-    let frame_builder = FrameBuilder::job_setup(1024);
+    let frame_builder = Frame::job_setup(1024);
     frame_builder
         .max_amq_called(1)
         .max_amq_calling(1)

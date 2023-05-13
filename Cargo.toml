@@ -20,3 +20,4 @@ tpkt = {path = "tpkt"}
 [dev-dependencies]
 tokio = {version = "1.28.0", features = ["full"]}
 anyhow = "1.0.71"
+custom-utils = "0.10.14"

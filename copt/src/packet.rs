@@ -20,7 +20,7 @@ impl<F: Debug + Eq + PartialEq> CoptFrame<F> {
     }
 
     pub fn length(&self) -> u8 {
-        self.pdu_type.length() + 1
+        self.pdu_type.length()
     }
 }
 
@@ -76,7 +76,7 @@ pub struct ConnectComm {
 
 impl ConnectComm {
     pub fn length(&self) -> u8 {
-        5 + self.parameters.iter().fold(0, |x, item| x + item.length())
+        6 + self.parameters.iter().fold(0, |x, item| x + item.length())
     }
     pub(crate) fn decode(src: &mut BytesMut) -> Result<Self> {
         if src.len() < 5 {
