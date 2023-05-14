@@ -19,7 +19,16 @@ async fn main() -> Result<()> {
 
     let mut buf = [0u8; 1000];
     {
-        let frame = init_copt_connect_request().to_bytes::<CoptEncoder<S7CommEncoder>>()?;
+        // let frame = init_copt_connect_request().to_bytes::<CoptEncoder<S7CommEncoder>>()?;
+        let frame = s7_util::Builder::build_copt_connect_request()
+            .source_ref([0, 1])
+            .destination_ref([0, 0])
+            .class_and_others(0, false, false)
+            .pdu_size(TpduSize::L1024)
+            .src_tsap([1, 0])
+            .dst_tsap([2, 1])
+            .build_to_request()
+            .unwrap();
         req.write_all(frame.as_ref()).await.unwrap();
         let mut bytes = BytesMut::new();
         let mut decoder = TpktDecoder(CoptDecoder(S7CommDecoder));
@@ -106,19 +115,6 @@ async fn main() -> Result<()> {
         }
     }
     Ok(())
-}
-
-fn init_copt_connect_request() -> TpktFrame<CoptFrame> {
-    TpktFrame::new(
-        CoptFrame::builder_of_connect()
-            .source_ref([0, 1])
-            .destination_ref([0, 0])
-            .class_and_others(0, false, false)
-            .push_parameter(Parameter::TpduSize(TpduSize::L1024))
-            .push_parameter(Parameter::new_src_tsap([1, 0].to_vec()))
-            .push_parameter(Parameter::new_dst_tsap([2, 1].to_vec()))
-            .build_to_request(),
-    )
 }
 
 fn init_s7_setup() -> TpktFrame<CoptFrame> {

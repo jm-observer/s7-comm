@@ -58,3 +58,15 @@ where
         Ok(Some(TpktFrame { version, payload }))
     }
 }
+
+impl<E: Default> Default for TpktEncoder<E> {
+    fn default() -> Self {
+        Self(E::default())
+    }
+}
+
+impl<D: Default> Default for TpktDecoder<D> {
+    fn default() -> Self {
+        Self(D::default())
+    }
+}

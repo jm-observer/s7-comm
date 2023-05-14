@@ -126,9 +126,9 @@ pub enum Parameter {
     //             0000 1000   256 octets
     //             0000 0111   128 octets
     TpduSize(TpduSize),
-    /// 0xc1
+    /// 0xc1    todo?
     SrcTsap(Vec<u8>),
-    /// 0xc2
+    /// 0xc2    todo?
     DstTsap(Vec<u8>),
 }
 
