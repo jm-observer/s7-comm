@@ -1,19 +1,19 @@
 use crate::codec::S7Encoder;
 use crate::error::*;
 use bytes::BytesMut;
-use copt::{ConnectComm, CoptFrame, Parameter, PduType, TpduSize};
+use copt::{CoptFrame};
 use tokio_util::codec::Encoder;
 use tpkt::TpktFrame;
 
 #[derive(Default)]
-pub struct CoptSetupBuilder {
+pub struct S7SetupBuilder {
     pdu_ref: u16,
     max_amq_calling: u16,
     max_amq_called: u16,
     pdu_length: u16,
 }
 
-impl CoptSetupBuilder {
+impl S7SetupBuilder {
     pub fn pdu_ref(mut self, pdu_ref: u16) -> Self {
         self.pdu_ref = pdu_ref;
         self
@@ -31,7 +31,7 @@ impl CoptSetupBuilder {
         self
     }
 
-    pub fn build_to_request(self) -> Result<BytesMut> {
+    pub fn build(self) -> Result<BytesMut> {
         let frame = TpktFrame::new(
             CoptFrame::builder_of_dt_data(
                 s7_comm::Frame::job_setup(self.pdu_ref)

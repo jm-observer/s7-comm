@@ -11,7 +11,7 @@ impl FrameJobReadVarBuilder {
         self.pdu_ref = pdu_ref;
         self
     }
-    fn add_item(mut self, item: ItemRequest) -> Self {
+    pub fn add_item(mut self, item: ItemRequest) -> Self {
         self.items.push(item);
         self
     }

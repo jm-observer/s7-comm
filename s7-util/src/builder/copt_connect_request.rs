@@ -37,15 +37,15 @@ impl CoptConnectRequestBuilder {
         self
     }
 
-    pub fn pdu_size(mut self, pdu_size: TpduSize) -> Self {
+    pub fn pdu_size(self, pdu_size: TpduSize) -> Self {
         self.push_parameter(Parameter::TpduSize(pdu_size))
     }
 
-    pub fn src_tsap(mut self, src_tsap: [u8; 2]) -> Self {
+    pub fn src_tsap(self, src_tsap: [u8; 2]) -> Self {
         self.push_parameter(Parameter::new_src_tsap(src_tsap.to_vec()))
     }
 
-    pub fn dst_tsap(mut self, dst_tsap: [u8; 2]) -> Self {
+    pub fn dst_tsap(self, dst_tsap: [u8; 2]) -> Self {
         self.push_parameter(Parameter::new_dst_tsap(dst_tsap.to_vec()))
     }
 

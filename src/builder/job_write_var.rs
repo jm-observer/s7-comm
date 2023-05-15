@@ -12,7 +12,7 @@ impl FrameJobWriteVarBuilder {
         self.pdu_ref = pdu_ref;
         self
     }
-    fn add_item(mut self, item: (ItemRequest, DataItemVal)) -> Self {
+    pub fn add_item(mut self, item: (ItemRequest, DataItemVal)) -> Self {
         self.items.push(item);
         self
     }
