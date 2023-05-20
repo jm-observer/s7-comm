@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
         // to_bytes::<CoptEncoder<S7CommEncoder>>()?
         // ;
         let frame =
-            s7_util::build_copt_connect_request()
+            s7_client::build_copt_connect_request()
                 .source_ref([0, 1])
                 .destination_ref([0, 0])
                 .class_and_others(0, false, false)
@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
         }
     }
     {
-        let frame = s7_util::build_s7_setup()
+        let frame = s7_client::build_s7_setup()
             .max_amq_called(1)
             .max_amq_calling(1)
             .pdu_length(480)
@@ -114,7 +114,7 @@ async fn main() -> Result<()> {
         }
     }
     {
-        let frame = s7_util::build_s7_write()
+        let frame = s7_client::build_s7_write()
             .pdu_ref(1024)
             .write_db_bytes(
                 1,
@@ -167,7 +167,7 @@ async fn main() -> Result<()> {
         }
     }
     {
-        let frame = s7_util::build_s7_read()
+        let frame = s7_client::build_s7_read()
             .pdu_ref(1024)
             .read_db_bytes(1, 300, 4)
             .build()

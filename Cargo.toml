@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "tpkt", "copt", "s7-util"]
+members = [".", "tpkt", "copt", "s7-client"]
 
 [package]
 name = "s7-comm"
