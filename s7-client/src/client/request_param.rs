@@ -1,8 +1,9 @@
-use serde::{Serialize, Deserialize};
+use s7_comm::ItemRequest;
+use serde::{Deserialize, Serialize};
 
 use crate::error::S7ConnectError;
 use std::ops::Deref;
-
+type S7Area = s7_comm::Area;
 // Area ID
 #[derive(
     Debug, Copy, Clone, Serialize, Deserialize,
@@ -23,18 +24,73 @@ pub enum Area {
     /// This is your storage  : db number,
     /// DataSizeType
     DataBausteine(u16, DataSizeType),
-    V(DataSizeType), /* Counter,
-                      * Timer, */
+    V(DataSizeType) /* Counter,
+                     * Timer, */
 }
-impl Area {
-    pub fn area_data(&self) -> u8 {
+
+impl Into<ItemRequest> for Area {
+    fn into(self) -> ItemRequest {
         match &self {
-            Area::ProcessInput(_) => 0x81,
-            Area::ProcessOutput(_) => 0x82,
-            Area::V(_) => 0x84,
+            Area::ProcessInput(ds) => {
+                ItemRequest::new(
+                    s7_comm::TransportSize::Byte,
+                    s7_comm::DbNumber::NotIn,
+                    S7Area::ProcessInput,
+                    ds.byte_addr(),
+                    ds.bit_addr(),
+                    ds.length()
+                )
+            },
+            Area::ProcessOutput(ds) => {
+                ItemRequest::new(
+                    s7_comm::TransportSize::Byte,
+                    s7_comm::DbNumber::NotIn,
+                    S7Area::ProcessOutput,
+                    ds.byte_addr(),
+                    ds.bit_addr(),
+                    ds.length()
+                )
+            },
+            Area::V(ds) => ItemRequest::new(
+                s7_comm::TransportSize::Byte,
+                s7_comm::DbNumber::DbNumber(1),
+                S7Area::DataBlocks,
+                ds.byte_addr(),
+                ds.bit_addr(),
+                ds.length()
+            ),
+            Area::DataBausteine(
+                db_number,
+                ds
+            ) => ItemRequest::new(
+                s7_comm::TransportSize::Byte,
+                s7_comm::DbNumber::DbNumber(
+                    *db_number
+                ),
+                S7Area::DataBlocks,
+                ds.byte_addr(),
+                ds.bit_addr(),
+                ds.length()
+            )
+        }
+    }
+}
+
+impl Area {
+    pub fn area_data(&self) -> S7Area {
+        match &self {
+            Area::ProcessInput(_) => {
+                S7Area::ProcessInput
+            },
+            Area::ProcessOutput(_) => {
+                S7Area::ProcessOutput
+            },
+            Area::V(_) => S7Area::DataBlocks,
             // Area::Merker => {0x83}
-            Area::DataBausteine(_, _) => 0x84, /* Area::Counter => {0x1C}
-                                                * Area::Timer => {0x1D} */
+            Area::DataBausteine(_, _) => {
+                S7Area::DataBlocks
+            }, /* Area::Counter => {0x1C}
+                * Area::Timer => {0x1D} */
         }
     }
 
@@ -57,7 +113,7 @@ impl Deref for Area {
             Area::ProcessInput(val) => val,
             Area::ProcessOutput(val) => val,
             Area::V(val) => val,
-            Area::DataBausteine(_, val) => val,
+            Area::DataBausteine(_, val) => val
         }
     }
 }
@@ -73,13 +129,13 @@ pub enum BitAddr {
     Addr4 = 4,
     Addr5 = 5,
     Addr6 = 6,
-    Addr7 = 7,
+    Addr7 = 7
 }
 impl TryFrom<u16> for BitAddr {
     type Error = S7ConnectError;
 
     fn try_from(
-        value: u16,
+        value: u16
     ) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Self::Addr0),
@@ -92,9 +148,9 @@ impl TryFrom<u16> for BitAddr {
             7 => Ok(Self::Addr7),
             val => Err(
                 S7ConnectError::InvalidBitAddr(
-                    val,
-                ),
-            ),
+                    val
+                )
+            )
         }
     }
 }
@@ -112,7 +168,7 @@ pub enum DataSizeType {
     DInt { addr: u16, len: u16 },
     Real { addr: u16, len: u16 },
     Counter { addr: u16, len: u16 },
-    Timer { addr: u16, len: u16 },
+    Timer { addr: u16, len: u16 }
 }
 impl DataSizeType {
     /// 类型对应的字节长度
@@ -128,7 +184,7 @@ impl DataSizeType {
             | Timer { .. } => 2,
             DWord { .. }
             | DInt { .. }
-            | Real { .. } => 4,
+            | Real { .. } => 4
         }
     }
 
@@ -139,7 +195,7 @@ impl DataSizeType {
             Bit { bit_addr, .. } => {
                 *bit_addr as u8
             },
-            _ => 0x00,
+            _ => 0x00
         }
     }
 
@@ -156,7 +212,7 @@ impl DataSizeType {
             DInt { len, .. } => *len,
             Real { len, .. } => *len,
             Counter { len, .. } => *len,
-            Timer { len, .. } => *len,
+            Timer { len, .. } => *len
         }
     }
 
@@ -178,15 +234,31 @@ impl DataSizeType {
             DInt { addr, .. } => *addr,
             Real { addr, .. } => *addr,
             Counter { addr, .. } => *addr,
-            Timer { addr, .. } => *addr,
+            Timer { addr, .. } => *addr
         };
         let address = ((byte_addr as u32) << 3)
             + self.bit_addr() as u32;
         [
             ((address & 0x00FF0000) >> 16) as u8,
             ((address & 0x0000FF00) >> 8) as u8,
-            (address & 0x000000FF) as u8,
+            (address & 0x000000FF) as u8
         ]
+    }
+
+    pub fn byte_addr(&self) -> u16 {
+        use DataSizeType::*;
+        match self {
+            Bit { addr, .. } => *addr,
+            Byte { addr, .. } => *addr,
+            Char { addr, .. } => *addr,
+            Word { addr, .. } => *addr,
+            Int { addr, .. } => *addr,
+            DWord { addr, .. } => *addr,
+            DInt { addr, .. } => *addr,
+            Real { addr, .. } => *addr,
+            Counter { addr, .. } => *addr,
+            Timer { addr, .. } => *addr
+        }
     }
 
     pub fn data(&self) -> u8 {
@@ -201,7 +273,7 @@ impl DataSizeType {
             DInt { .. } => 0x07,
             Real { .. } => 0x08,
             Counter { .. } => 0x1C,
-            Timer { .. } => 0x1D,
+            Timer { .. } => 0x1D
         }
     }
 }

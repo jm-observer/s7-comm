@@ -21,8 +21,8 @@ async fn main() -> Result<()> {
         102,
         ConnectMode::RackSlot {
             conn_type: ConnectionType::PG,
-            rack:      1,
-            slot:      0
+            rack:      0,
+            slot:      1
         }
     );
     let client =

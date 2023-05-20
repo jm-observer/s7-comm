@@ -192,6 +192,20 @@ pub enum TpduSize {
     L128  = 0b0000_0111
 }
 
+impl TpduSize {
+    pub fn pdu_ref(&self) -> u16 {
+        match self {
+            TpduSize::L8192 => 8192,
+            TpduSize::L4096 => 4096,
+            TpduSize::L2048 => 2048,
+            TpduSize::L1024 => 1024,
+            TpduSize::L512 => 512,
+            TpduSize::L256 => 256,
+            TpduSize::L128 => 128
+        }
+    }
+}
+
 impl Parameter {
     pub fn new_dst_tsap(data: Vec<u8>) -> Self {
         Self::DstTsap(data)
