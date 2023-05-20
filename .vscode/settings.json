@@ -1,6 +1,5 @@
 {
     "rust-analyzer.linkedProjects": [
-        ".\\s7-client\\Cargo.toml",
         ".\\s7-client\\Cargo.toml"
     ],
     "rust-analyzer.showUnlinkedFileNotification": false

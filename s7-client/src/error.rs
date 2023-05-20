@@ -10,7 +10,16 @@ pub enum Error {
     TpktErr(#[from] tpkt::Error),
 
     #[error("Error: {0}")]
-    Error(String)
+    Err(String),
+
+    #[error("WriteTimeout")]
+    WriteTimeout,
+
+    #[error("ReadTimeout")]
+    ReadTimeout,
+
+    #[error("Error: {0}")]
+    ConnectErr(String)
 }
 
 pub type Result<T> =
@@ -151,11 +160,13 @@ impl fmt::Display for S7ConnectError {
         f: &mut fmt::Formatter
     ) -> fmt::Result {
         match self {
-            S7ConnectError::ConnectFail(s) => write!(
-                f,
-                "connection error: {}",
-                s
-            ),
+            S7ConnectError::ConnectFail(s) => {
+                write!(
+                    f,
+                    "connection error: {}",
+                    s
+                )
+            },
             S7ConnectError::Lock => {
                 write!(f, "Lock error: panicked")
             },
