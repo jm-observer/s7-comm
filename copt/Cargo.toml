@@ -2,15 +2,21 @@
 name = "copt"
 version = "0.1.0"
 edition = "2021"
+description = "copt protocols"
+repository = "https://github.com/jm-observer/s7-comm"
 
+license-file = "../LICENSE"
+readme = "../README.md"
+
+include = [
+    "Cargo.toml", "src/**/*.rs"
+]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 tokio-util = {version = "0.7.8", features = ["codec"]}
 bytes = "1.4.0"
 thiserror = "1.0.40"
-tpkt = {path = "../tpkt"}
+# tpkt = {path = "../tpkt"}
+tpkt = "0.1.0"
 num_enum = "0.6.1"
-
-[dev-dependencies]
-s7-comm = { path = "../s7-comm"}

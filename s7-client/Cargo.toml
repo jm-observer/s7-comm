@@ -2,21 +2,30 @@
 name = "s7-client"
 version = "0.1.0"
 edition = "2021"
+description = "copt protocols"
+repository = "https://github.com/jm-observer/s7-comm"
 
+license-file = "../LICENSE"
+readme = "../README.md"
+
+include = [
+    "Cargo.toml", "src/**/*.rs", "examples/*.rs"
+]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 bytes = "1.4.0"
 log = "0.4.17"
-s7-comm = { path = "../s7-comm"}
-copt = {path = "../copt"}
-tpkt = {path = "../tpkt"}
+s7-comm = "0.1.0"
+copt = "0.1.0"
+tpkt = "0.1.0"
 thiserror = "1.0.40"
 tokio-util = "0.7.8"
 serde = {version = "1.0.163", features = ["derive"]}
-tokio = {version = "1.28.0", features = ["full"]}
+tokio = {version = "1.28.0", features = ["rt-multi-thread", "time", "io-util", "net"]}
 
 [dev-dependencies]
 anyhow = "1.0.71"
 custom-utils = "0.10.14"
 serde = "1.0.163"
+tokio = {version = "1.28.0", features = ["full"]}

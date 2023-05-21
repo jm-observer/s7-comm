@@ -2,7 +2,15 @@
 name = "s7-comm"
 version = "0.1.0"
 edition = "2021"
+description = "s7 comm protocols"
+repository = "https://github.com/jm-observer/s7-comm"
 
+license-file = "../LICENSE"
+readme = "../README.md"
+
+include = [
+    "Cargo.toml", "src/**/*.rs"
+]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -11,10 +19,10 @@ bytes = "1.4.0"
 num_enum = "0.6.1"
 log = "0.4.17"
 thiserror = "1.0.40"
-copt = {path = "../copt"}
+copt = "0.1.0"
 
 [dev-dependencies]
 tokio = {version = "1.28.0", features = ["full"]}
 anyhow = "1.0.71"
 custom-utils = "0.10.14"
-tpkt = {path = "../tpkt"}
+tpkt = "0.1.0"
