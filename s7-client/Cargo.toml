@@ -8,14 +8,13 @@ edition = "2021"
 [dependencies]
 bytes = "1.4.0"
 log = "0.4.17"
-s7-comm = { path = ".."}
+s7-comm = { path = "../s7-comm"}
 copt = {path = "../copt"}
 tpkt = {path = "../tpkt"}
 thiserror = "1.0.40"
 tokio-util = "0.7.8"
 serde = {version = "1.0.163", features = ["derive"]}
 tokio = {version = "1.28.0", features = ["full"]}
-
 
 [dev-dependencies]
 anyhow = "1.0.71"

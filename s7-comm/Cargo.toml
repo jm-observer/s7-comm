@@ -1,5 +1,5 @@
 [package]
-name = "copt"
+name = "s7-comm"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,9 +8,13 @@ edition = "2021"
 [dependencies]
 tokio-util = {version = "0.7.8", features = ["codec"]}
 bytes = "1.4.0"
-thiserror = "1.0.40"
-tpkt = {path = "../tpkt"}
 num_enum = "0.6.1"
+log = "0.4.17"
+thiserror = "1.0.40"
+copt = {path = "../copt"}
 
 [dev-dependencies]
-s7-comm = { path = "../s7-comm"}
+tokio = {version = "1.28.0", features = ["full"]}
+anyhow = "1.0.71"
+custom-utils = "0.10.14"
+tpkt = {path = "../tpkt"}
