@@ -629,7 +629,8 @@ impl ItemRequest {
     ) -> Result<Self> {
         if src.len() < 12 {
             return Err(Error::Error(
-                "todo".to_string()
+                "byte's length is not enough"
+                    .to_string()
             ));
         }
         let variable_specification = src.get_u8();
@@ -679,7 +680,8 @@ impl DataItemWriteResponse {
     ) -> Result<Self> {
         if src.len() == 0 {
             return Err(Error::Error(
-                "todo".to_string()
+                "byte's length is zero"
+                    .to_string()
             ));
         }
         Ok(Self {
@@ -748,7 +750,7 @@ impl DataItemVal {
                 (length / 8) as usize
             },
             _ => {
-                // todo!()
+                // todo ?
                 (length / 8) as usize
             }
         }
@@ -772,7 +774,8 @@ impl DataItemVal {
     ) -> Result<Self> {
         if src.len() < 4 {
             return Err(Error::Error(
-                "todo".to_string()
+                "byte's length is not enough"
+                    .to_string()
             ));
         }
         let return_code =
@@ -786,7 +789,7 @@ impl DataItemVal {
         );
         if src.len() < bytes_len {
             return Err(Error::Error(
-                "todo".to_string()
+                "byte's length is not enough".to_string()
             ));
         }
         let mut data =

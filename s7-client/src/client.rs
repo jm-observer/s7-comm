@@ -320,7 +320,6 @@ fn build_framed_copt_connect_request(
         .build_to_request()?)
 }
 
-/// todo
 fn build_framed_s7_setup(
     options: &Options
 ) -> Result<BytesMut> {
