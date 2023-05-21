@@ -38,7 +38,7 @@ impl Into<ItemRequest> for Area {
                     S7Area::ProcessInput,
                     ds.byte_addr(),
                     ds.bit_addr(),
-                    ds.length()
+                    ds.len()
                 )
             },
             Area::ProcessOutput(ds) => {
@@ -48,7 +48,7 @@ impl Into<ItemRequest> for Area {
                     S7Area::ProcessOutput,
                     ds.byte_addr(),
                     ds.bit_addr(),
-                    ds.length()
+                    ds.len()
                 )
             },
             Area::V(ds) => ItemRequest::new(
@@ -57,7 +57,7 @@ impl Into<ItemRequest> for Area {
                 S7Area::DataBlocks,
                 ds.byte_addr(),
                 ds.bit_addr(),
-                ds.length()
+                ds.len()
             ),
             Area::DataBausteine(
                 db_number,
@@ -70,7 +70,7 @@ impl Into<ItemRequest> for Area {
                 S7Area::DataBlocks,
                 ds.byte_addr(),
                 ds.bit_addr(),
-                ds.length()
+                ds.len()
             )
         }
     }

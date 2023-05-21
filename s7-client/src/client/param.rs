@@ -1,6 +1,3 @@
-use std::{net::Ipv4Addr, time::Duration};
-
-use super::request_param::Area;
 use serde::{Deserialize, Serialize};
 
 /// Client Connection Type

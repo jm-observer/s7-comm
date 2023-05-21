@@ -15,7 +15,7 @@ use copt::{
 use log::debug;
 use s7_comm::{
     AckData, DataItemVal, DataItemWriteResponse,
-    Frame, ReadVarAckData, S7CommDecoder
+    Frame, S7CommDecoder
 };
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},

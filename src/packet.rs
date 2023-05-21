@@ -708,7 +708,7 @@ impl DataItemVal {
         Self {
             return_code,
             transport_size_type:
-                TransportSize::Word,
+                TransportSize::Byte,
             length: (data.len() as u16) * 8,
             data: data.to_vec()
         }
@@ -739,19 +739,17 @@ impl DataItemVal {
         transport_size_type: TransportSize,
         length: u16
     ) -> usize {
+        if length == 0 {
+            return 0;
+        }
         match transport_size_type {
-            TransportSize::Bit
-            | TransportSize::Counter
-            | TransportSize::Timer => {
-                length as usize
-            },
-            TransportSize::Byte
-            | TransportSize::Char
-            | TransportSize::Word => {
+            TransportSize::Bit => length as usize,
+            TransportSize::Byte => {
                 (length / 8) as usize
             },
             _ => {
-                todo!()
+                // todo!()
+                (length / 8) as usize
             }
         }
     }
@@ -815,9 +813,21 @@ impl DataItemVal {
 #[repr(u8)]
 pub enum ReturnCode {
     /// 0
-    Reserved = 0,
-    /// 0xff
-    Success  = 0xff
+    Reserved       = 0,
+    /// Hardware error
+    HwFault        = 1,
+    /// Accessing the object not allowed
+    NotAllow       = 3,
+    /// Invalid address
+    InvalidAddress = 5,
+    /// Data type not supported
+    NotSupported   = 6,
+    /// Data type inconsistent
+    SizeMismatch   = 7,
+    /// Object does not exist
+    Err            = 0x0a,
+    /// Success
+    Success        = 0xff
 }
 #[derive(
     Debug,
@@ -828,19 +838,42 @@ pub enum ReturnCode {
     FromPrimitive,
     PartialEq,
 )]
-/// ?
+// #define S7COMM_DATA_TRANSPORT_SIZE_NULL     0
+// #define S7COMM_DATA_TRANSPORT_SIZE_BBIT     3
+// /* bit access, len is in bits */
+// #define S7COMM_DATA_TRANSPORT_SIZE_BBYTE    4
+// /* byte/word/dword access, len is in bits */
+// #define S7COMM_DATA_TRANSPORT_SIZE_BINT     5
+// /* integer access, len is in bits */
+// #define S7COMM_DATA_TRANSPORT_SIZE_BDINT    6
+// /* integer access, len is in bytes */
+// #define S7COMM_DATA_TRANSPORT_SIZE_BREAL    7
+// /* real access, len is in bytes */
+// #define S7COMM_DATA_TRANSPORT_SIZE_BSTR     9
+// /* octet string, len is in bytes */
+// #define S7COMM_DATA_TRANSPORT_SIZE_NCKADDR1 17
+// /* NCK address description, fixed length */
+// #define S7COMM_DATA_TRANSPORT_SIZE_NCKADDR2 18
+// /* NCK address description, fixed length */
 #[repr(u8)]
 pub enum TransportSize {
-    Bit     = 0x01,
-    Byte    = 0x02,
-    Char    = 0x03,
-    Word    = 0x04,
-    Int     = 0x05,
-    DWord   = 0x06,
-    DInt    = 0x07,
-    Real    = 0x08,
-    Counter = 0x1C,
-    Timer   = 0x1D,
+    Null     = 0x00,
+    /// bit access, len is in bits
+    Bit      = 0x03,
+    /// byte/word/dword access, len is in bits?
+    Byte     = 0x04,
+    /// integer access, len is in bits
+    Int      = 0x05,
+    /// integer access, len is in bytes
+    Dint     = 0x06,
+    /// real access, len is in bytes
+    Real     = 0x07,
+    /// octet string, len is in bytes
+    Str      = 0x09,
+    /// NCK address description, fixed length
+    NckAddr1 = 0x1C,
+    /// NCK address description, fixed length
+    NckAddr2 = 0x12,
     #[num_enum(catch_all)]
     NotSupport(u8)
 }
