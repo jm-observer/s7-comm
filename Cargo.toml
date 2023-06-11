@@ -1,2 +1,4 @@
 [workspace]
 members = ["s7-comm", "tpkt", "copt", "s7-client"]
+
+resolver = "2"
