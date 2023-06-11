@@ -1,6 +1,6 @@
 [package]
 name = "s7-client"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "copt protocols"
 repository = "https://github.com/jm-observer/s7-comm"

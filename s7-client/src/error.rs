@@ -19,7 +19,10 @@ pub enum Error {
     ReadTimeout,
 
     #[error("Error: {0}")]
-    ConnectErr(String)
+    ConnectErr(String),
+
+    #[error("InvalidBitAddr: {0}")]
+    InvalidBitAddr(u16),
 }
 
 pub type Result<T> =
@@ -45,7 +48,7 @@ pub type Result<T> =
 
 use std::{
     error, fmt,
-    io::{Error as IOError, ErrorKind}
+    io::{Error as IOError, ErrorKind},
 };
 
 const TCP_SOCKET_CREATION: i32 = 1;
@@ -134,13 +137,13 @@ pub enum S7ConnectError {
     Lock,
     IOError(ErrorKind),
     Response {
-        code: i32
+        code: i32,
     },
     CPU {
-        code: i32
+        code: i32,
     },
     InvalidInput {
-        input: String
+        input: String,
     },
     Send,
     Iso,
@@ -149,15 +152,14 @@ pub enum S7ConnectError {
     InvalidCpuStatus(u8),
     InvalidResponse {
         reason: String,
-        bytes:  Vec<u8>
+        bytes: Vec<u8>,
     },
-    InvalidBitAddr(u16)
 }
 
 impl fmt::Display for S7ConnectError {
     fn fmt(
         &self,
-        f: &mut fmt::Formatter
+        f: &mut fmt::Formatter,
     ) -> fmt::Result {
         match self {
             S7ConnectError::ConnectFail(s) => {
@@ -188,7 +190,7 @@ impl fmt::Display for S7ConnectError {
                 )
             },
             S7ConnectError::InvalidInput {
-                input
+                input,
             } => write!(
                 f,
                 "Invalid input: {}",
@@ -210,7 +212,7 @@ impl fmt::Display for S7ConnectError {
             },
             S7ConnectError::TryFrom(
                 bytes,
-                reason
+                reason,
             ) => {
                 write!(
                     f,
@@ -220,7 +222,7 @@ impl fmt::Display for S7ConnectError {
                 )
             },
             S7ConnectError::InvalidCpuStatus(
-                status
+                status,
             ) => write!(
                 f,
                 "Invalid cpu status {}",
@@ -228,7 +230,7 @@ impl fmt::Display for S7ConnectError {
             ),
             S7ConnectError::InvalidResponse {
                 reason,
-                bytes
+                bytes,
             } => {
                 write!(
                     f,
@@ -237,15 +239,15 @@ impl fmt::Display for S7ConnectError {
                     bytes, reason
                 )
             },
-            S7ConnectError::InvalidBitAddr(
-                addr
-            ) => {
-                write!(
-                    f,
-                    "Invalid bit addr {}",
-                    addr
-                )
-            }
+            // S7ConnectError::InvalidBitAddr(
+            //     addr
+            // ) => {
+            //     write!(
+            //         f,
+            //         "Invalid bit addr {}",
+            //         addr
+            //     )
+            // }
         }
     }
 }
@@ -259,7 +261,7 @@ impl From<IOError> for S7ConnectError {
 // one.
 impl error::Error for S7ConnectError {
     fn source(
-        &self
+        &self,
     ) -> Option<&(dyn error::Error + 'static)>
     {
         None
@@ -295,7 +297,7 @@ fn cpu_error(err: i32) -> i32 {
         | CODE_7_NO_PASSWORD_TO_CLEAR => {
             CLI_NO_PASSWORD_TO_SET_OR_CLEAR
         },
-        _ => CLI_FUNCTION_REFUSED
+        _ => CLI_FUNCTION_REFUSED,
     }
 }
 
@@ -453,6 +455,6 @@ fn error_text(err: i32) -> &'static str {
         CLI_FUNCTION_NOT_IMPLEMENTED => {
             "CLI : Function not implemented"
         },
-        _ => "CLI : Unknown error"
+        _ => "CLI : Unknown error",
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "s7-comm"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "s7 comm protocols"
 repository = "https://github.com/jm-observer/s7-comm"

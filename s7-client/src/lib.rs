@@ -7,6 +7,7 @@ mod error;
 
 pub use builder::*;
 pub use client::*;
-pub use copt::*;
+pub use copt;
+pub use error::*;
 pub use s7_comm;
-pub use tpkt::*;
+pub use tpkt;

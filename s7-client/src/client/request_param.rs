@@ -1,8 +1,9 @@
 use s7_comm::ItemRequest;
 use serde::{Deserialize, Serialize};
 
-use crate::error::S7ConnectError;
+use crate::Error;
 use std::ops::Deref;
+
 type S7Area = s7_comm::Area;
 // Area ID
 #[derive(
@@ -24,8 +25,8 @@ pub enum Area {
     /// This is your storage  : db number,
     /// DataSizeType
     DataBausteine(u16, DataSizeType),
-    V(DataSizeType) /* Counter,
-                     * Timer, */
+    V(DataSizeType), /* Counter,
+                      * Timer, */
 }
 
 impl Into<ItemRequest> for Area {
@@ -38,7 +39,7 @@ impl Into<ItemRequest> for Area {
                     S7Area::ProcessInput,
                     ds.byte_addr(),
                     ds.bit_addr(),
-                    ds.len()
+                    ds.len(),
                 )
             },
             Area::ProcessOutput(ds) => {
@@ -48,7 +49,7 @@ impl Into<ItemRequest> for Area {
                     S7Area::ProcessOutput,
                     ds.byte_addr(),
                     ds.bit_addr(),
-                    ds.len()
+                    ds.len(),
                 )
             },
             Area::V(ds) => ItemRequest::new(
@@ -57,21 +58,21 @@ impl Into<ItemRequest> for Area {
                 S7Area::DataBlocks,
                 ds.byte_addr(),
                 ds.bit_addr(),
-                ds.len()
+                ds.len(),
             ),
             Area::DataBausteine(
                 db_number,
-                ds
+                ds,
             ) => ItemRequest::new(
                 s7_comm::TransportSize::Byte,
                 s7_comm::DbNumber::DbNumber(
-                    *db_number
+                    *db_number,
                 ),
                 S7Area::DataBlocks,
                 ds.byte_addr(),
                 ds.bit_addr(),
-                ds.len()
-            )
+                ds.len(),
+            ),
         }
     }
 }
@@ -113,7 +114,7 @@ impl Deref for Area {
             Area::ProcessInput(val) => val,
             Area::ProcessOutput(val) => val,
             Area::V(val) => val,
-            Area::DataBausteine(_, val) => val
+            Area::DataBausteine(_, val) => val,
         }
     }
 }
@@ -129,13 +130,13 @@ pub enum BitAddr {
     Addr4 = 4,
     Addr5 = 5,
     Addr6 = 6,
-    Addr7 = 7
+    Addr7 = 7,
 }
 impl TryFrom<u16> for BitAddr {
-    type Error = S7ConnectError;
+    type Error = Error;
 
     fn try_from(
-        value: u16
+        value: u16,
     ) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Self::Addr0),
@@ -146,11 +147,9 @@ impl TryFrom<u16> for BitAddr {
             5 => Ok(Self::Addr5),
             6 => Ok(Self::Addr6),
             7 => Ok(Self::Addr7),
-            val => Err(
-                S7ConnectError::InvalidBitAddr(
-                    val
-                )
-            )
+            val => {
+                Err(Error::InvalidBitAddr(val))
+            },
         }
     }
 }
@@ -168,7 +167,7 @@ pub enum DataSizeType {
     DInt { addr: u16, len: u16 },
     Real { addr: u16, len: u16 },
     Counter { addr: u16, len: u16 },
-    Timer { addr: u16, len: u16 }
+    Timer { addr: u16, len: u16 },
 }
 impl DataSizeType {
     /// 类型对应的字节长度
@@ -184,7 +183,7 @@ impl DataSizeType {
             | Timer { .. } => 2,
             DWord { .. }
             | DInt { .. }
-            | Real { .. } => 4
+            | Real { .. } => 4,
         }
     }
 
@@ -195,7 +194,7 @@ impl DataSizeType {
             Bit { bit_addr, .. } => {
                 *bit_addr as u8
             },
-            _ => 0x00
+            _ => 0x00,
         }
     }
 
@@ -212,7 +211,7 @@ impl DataSizeType {
             DInt { len, .. } => *len,
             Real { len, .. } => *len,
             Counter { len, .. } => *len,
-            Timer { len, .. } => *len
+            Timer { len, .. } => *len,
         }
     }
 
@@ -234,14 +233,14 @@ impl DataSizeType {
             DInt { addr, .. } => *addr,
             Real { addr, .. } => *addr,
             Counter { addr, .. } => *addr,
-            Timer { addr, .. } => *addr
+            Timer { addr, .. } => *addr,
         };
         let address = ((byte_addr as u32) << 3)
             + self.bit_addr() as u32;
         [
             ((address & 0x00FF0000) >> 16) as u8,
             ((address & 0x0000FF00) >> 8) as u8,
-            (address & 0x000000FF) as u8
+            (address & 0x000000FF) as u8,
         ]
     }
 
@@ -257,7 +256,7 @@ impl DataSizeType {
             DInt { addr, .. } => *addr,
             Real { addr, .. } => *addr,
             Counter { addr, .. } => *addr,
-            Timer { addr, .. } => *addr
+            Timer { addr, .. } => *addr,
         }
     }
 
@@ -273,7 +272,7 @@ impl DataSizeType {
             DInt { .. } => 0x07,
             Real { .. } => 0x08,
             Counter { .. } => 0x1C,
-            Timer { .. } => 0x1D
+            Timer { .. } => 0x1D,
         }
     }
 }
