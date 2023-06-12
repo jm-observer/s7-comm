@@ -629,7 +629,7 @@ impl ItemRequest {
     ) -> Result<Self> {
         if src.len() < 12 {
             return Err(Error::Error(
-                "byte's length is not enough"
+                "item request byte's length is not enough"
                     .to_string(),
             ));
         }
@@ -710,7 +710,7 @@ impl DataItemVal {
         Self {
             return_code,
             transport_size_type:
-                TransportSize::Byte,
+                TransportSize::Word,
             length: (data.len() as u16) * 8,
             data: data.to_vec(),
         }
@@ -723,7 +723,7 @@ impl DataItemVal {
         Self {
             return_code,
             transport_size_type:
-                TransportSize::Bit,
+                TransportSize::Char,
             length: 8,
             data: if data {
                 vec![1]
@@ -774,8 +774,8 @@ impl DataItemVal {
     ) -> Result<Self> {
         if src.len() < 4 {
             return Err(Error::Error(
-                "byte's length is not enough"
-                    .to_string(),
+                format!("data item val byte's length is not enough: {}"
+                    , src.len()),
             ));
         }
         let return_code =
@@ -787,16 +787,19 @@ impl DataItemVal {
             transport_size_type,
             length,
         );
+        let fill_byte_len = bytes_len % 2;
         if src.len() < bytes_len {
             return Err(Error::Error(
-                "byte's length is not enough"
-                    .to_string(),
+                format!("data item val byte's length is not enough: {} < {}", src.len(), bytes_len),
             ));
         }
         let mut data =
             Vec::with_capacity(bytes_len);
         for _ in 0..bytes_len {
             data.push(src.get_u8())
+        }
+        if fill_byte_len > 0 && src.len() >= 1 {
+            src.get_u8();
         }
         Ok(Self {
             return_code,
@@ -833,6 +836,7 @@ pub enum ReturnCode {
     /// Success
     Success = 0xff,
 }
+
 #[derive(
     Debug,
     Copy,
@@ -861,25 +865,37 @@ pub enum ReturnCode {
 // /* NCK address description, fixed length */
 #[repr(u8)]
 pub enum TransportSize {
-    Null = 0x00,
-    /// bit access, len is in bits
-    Bit = 0x03,
-    /// byte/word/dword access, len is in bits?
-    Byte = 0x04,
-    /// integer access, len is in bits
+    Bit = 0x01,
+    Byte = 0x02,
+    Char = 0x03,
+    Word = 0x04,
     Int = 0x05,
-    /// integer access, len is in bytes
-    Dint = 0x06,
-    /// real access, len is in bytes
-    Real = 0x07,
-    /// octet string, len is in bytes
-    Str = 0x09,
-    /// NCK address description, fixed length
-    NckAddr1 = 0x1C,
-    /// NCK address description, fixed length
-    NckAddr2 = 0x12,
+    DWord = 0x06,
+    DInt = 0x07,
+    Real = 0x08,
+    Counter = 0x1C,
+    Timer = 0x1D,
     #[num_enum(catch_all)]
     NotSupport(u8),
+    // Null = 0x00,
+    // /// bit access, len is in bits
+    // Bit = 0x03,
+    // /// byte/word/dword access, len is in bits?
+    // Byte = 0x04,
+    // /// integer access, len is in bits
+    // Int = 0x05,
+    // /// integer access, len is in bytes
+    // Dint = 0x06,
+    // /// real access, len is in bytes
+    // Real = 0x07,
+    // /// octet string, len is in bytes
+    // Str = 0x09,
+    // /// NCK address description, fixed length
+    // NckAddr1 = 0x1C,
+    // /// NCK address description, fixed length
+    // NckAddr2 = 0x12,
+    // #[num_enum(catch_all)]
+    // NotSupport(u8),
 }
 #[derive(
     Debug,
