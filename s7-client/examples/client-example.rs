@@ -10,8 +10,11 @@ use std::net::IpAddr;
 async fn main() -> Result<()> {
     custom_utils::logger::logger_stdout_debug();
 
+    let address: IpAddr =
+        "192.168.199.3".parse()?;
+
     let options = Options::new(
-        IpAddr::from([192u8, 168, 1, 99]),
+        address,
         102,
         ConnectMode::RackSlot {
             conn_type: ConnectionType::PG,
@@ -35,31 +38,32 @@ async fn main() -> Result<()> {
     //     println!("{:?}", rs);
     // }
 
+    /*
     let area0 = s7_client::Area::DataBausteine(
         1,
         s7_client::DataSizeType::Byte {
-            addr: 100,
-            len: 3,
+            addr: 0,
+            len: 1,
         },
     );
     let area1 = s7_client::Area::DataBausteine(
-        2,
-        s7_client::DataSizeType::Byte {
-            addr: 100,
+        1,
+        s7_client::DataSizeType::Word {
+            addr: 0,
             len: 2,
         },
     );
-    let area2 = s7_client::Area::DataBausteine(
-        1,
-        s7_client::DataSizeType::Bit {
-            addr: 200,
-            bit_addr: s7_client::BitAddr::Addr0,
+    let area2 = s7_client::Area::ProcessOutput(
+        s7_client::DataSizeType::Byte {
+            addr: 0,
+            len: 1,
         },
     );
+    */
     let area3 = s7_client::Area::ProcessInput(
         s7_client::DataSizeType::Bit {
             addr: 0,
-            bit_addr: s7_client::BitAddr::Addr0,
+            bit_addr: s7_client::BitAddr::Addr1,
         },
     );
     // let area4 = s7_client::Area::ProcessInput(
@@ -69,7 +73,9 @@ async fn main() -> Result<()> {
     //     },
     // );
     let ack = client
-        .read(vec![area0, area1, area3, area2])
+        .read(vec![
+            /*area0, area1, area2, */ area3,
+        ])
         .await?;
     for data in ack {
         debug!("{:?}", data);

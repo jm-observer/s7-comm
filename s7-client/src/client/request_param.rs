@@ -1,4 +1,4 @@
-use s7_comm::ItemRequest;
+use s7_comm::{ItemRequest, TransportSize};
 use serde::{Deserialize, Serialize};
 
 use crate::Error;
@@ -34,7 +34,7 @@ impl Into<ItemRequest> for Area {
         match &self {
             Area::ProcessInput(ds) => {
                 ItemRequest::new(
-                    s7_comm::TransportSize::Byte,
+                    ds.to_transport_size(),
                     s7_comm::DbNumber::NotIn,
                     S7Area::ProcessInput,
                     ds.byte_addr(),
@@ -44,7 +44,7 @@ impl Into<ItemRequest> for Area {
             },
             Area::ProcessOutput(ds) => {
                 ItemRequest::new(
-                    s7_comm::TransportSize::Byte,
+                    ds.to_transport_size(),
                     s7_comm::DbNumber::NotIn,
                     S7Area::ProcessOutput,
                     ds.byte_addr(),
@@ -53,7 +53,7 @@ impl Into<ItemRequest> for Area {
                 )
             },
             Area::V(ds) => ItemRequest::new(
-                s7_comm::TransportSize::Byte,
+                ds.to_transport_size(),
                 s7_comm::DbNumber::DbNumber(1),
                 S7Area::DataBlocks,
                 ds.byte_addr(),
@@ -64,7 +64,7 @@ impl Into<ItemRequest> for Area {
                 db_number,
                 ds,
             ) => ItemRequest::new(
-                s7_comm::TransportSize::Byte,
+                ds.to_transport_size(),
                 s7_comm::DbNumber::DbNumber(
                     *db_number,
                 ),
@@ -273,6 +273,17 @@ impl DataSizeType {
             Real { .. } => 0x08,
             Counter { .. } => 0x1C,
             Timer { .. } => 0x1D,
+        }
+    }
+
+    pub fn to_transport_size(
+        &self,
+    ) -> TransportSize {
+        match self {
+            DataSizeType::Bit { .. } => {
+                TransportSize::Bit
+            },
+            _ => TransportSize::NoBit,
         }
     }
 }

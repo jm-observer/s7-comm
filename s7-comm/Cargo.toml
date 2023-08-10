@@ -22,7 +22,7 @@ thiserror = "1.0.40"
 copt = "0.1.0"
 
 [dev-dependencies]
-tokio = {version = "1.28.0", features = ["full"]}
+tokio = {version = "1.28.0", features = ["rt-multi-thread", "time", "io-util", "net"]}
 anyhow = "1.0.71"
 custom-utils = "0.10.14"
 tpkt = "0.1.0"
