@@ -960,8 +960,8 @@ pub enum TransportSize {
 pub enum Area {
     ProcessInput = 0x81,
     ProcessOutput = 0x82,
-    DataBlocks = 0x84,
     Merker = 0x83,
+    DataBlocks = 0x84,
     Counter = 0x1c,
     Timer = 0x1d,
     #[num_enum(catch_all)]

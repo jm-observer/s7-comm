@@ -120,45 +120,6 @@ impl S7Client {
         Ok(())
     }
 
-    /*
-    pub async fn write_db_bytes(
-        &mut self,
-        db_number: u16,
-        byte_addr: u16,
-        data: &[u8],
-    ) -> Result<Vec<DataItemWriteResponse>> {
-        let frame = build_s7_write()
-            .pdu_ref(
-                self.options.tpdu_size.pdu_ref(),
-            )
-            .write_db_bytes(
-                db_number, byte_addr, data,
-            )
-            .build()?;
-
-        self.write(frame).await
-    }
-
-    pub async fn write_db_bit(
-        &mut self,
-        db_number: u16,
-        byte_addr: u16,
-        bit_addr: u8,
-        data: bool,
-    ) -> Result<Vec<DataItemWriteResponse>> {
-        let frame = build_s7_write()
-            .pdu_ref(
-                self.options.tpdu_size.pdu_ref(),
-            )
-            .write_db_bit(
-                db_number, byte_addr, bit_addr,
-                data,
-            )
-            .build()?;
-        self.write(frame).await
-    }
-    */
-
     pub async fn write_bytes(
         &mut self,
         db_number: Option<u16>,

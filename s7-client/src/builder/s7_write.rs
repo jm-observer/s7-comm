@@ -29,46 +29,6 @@ impl S7WriteBuilder {
         self
     }
 
-    /*
-    // todo 增加其他类型。应该也可以再抽象
-    pub fn write_db_bytes(
-        self,
-        db_number: u16,
-        byte_addr: u16,
-        data: &[u8],
-    ) -> Self {
-        let req = ItemRequest::init_db_byte(
-            db_number,
-            byte_addr,
-            0,
-            data.len() as u16,
-        );
-        let data_val =
-            DataItemVal::init_with_bytes(
-                ReturnCode::Reserved,
-                data,
-            );
-        self.add_item((req, data_val))
-    }
-
-    pub fn write_db_bit(
-        self,
-        db_number: u16,
-        byte_addr: u16,
-        bit_addr: u8,
-        data: bool,
-    ) -> Self {
-        let req = ItemRequest::init_db_bit(
-            db_number, byte_addr, bit_addr,
-        );
-        let data_val = DataItemVal::init_with_bit(
-            ReturnCode::Reserved,
-            data,
-        );
-        self.add_item((req, data_val))
-    }
-    */
-
     pub fn write_bytes(
         self,
         db_number: Option<u16>,

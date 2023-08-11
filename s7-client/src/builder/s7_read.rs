@@ -28,20 +28,6 @@ impl S7ReadBuilder {
         self
     }
 
-    /*
-    pub fn read_db_bytes(
-        self,
-        db_number: u16,
-        byte_addr: u16,
-        len: u16
-    ) -> Self {
-        let req = ItemRequest::init_db_byte(
-            db_number, byte_addr, 0, len
-        );
-        self.add_item(req)
-    }
-    */
-
     pub fn build(self) -> Result<BytesMut> {
         let mut read_builder =
             s7_comm::Frame::job_read_var(
