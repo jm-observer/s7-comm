@@ -590,7 +590,6 @@ impl ItemRequest {
         db_number: u16,
         byte_addr: u16,
         bit_addr: u8,
-        length: u16,
     ) -> Self {
         Self {
             variable_specification:
@@ -600,7 +599,7 @@ impl ItemRequest {
             syntax_id: Syntax::S7Any,
             transport_size_type:
                 TransportSize::Bit,
-            length,
+            length: 1,
             db_number: DbNumber::DbNumber(
                 db_number,
             ),
@@ -703,10 +702,8 @@ impl DataItemWriteResponse {
 #[derive(Debug, Eq, PartialEq)]
 pub struct DataItemVal {
     pub return_code: ReturnCode,
-    /// always = 0x04?
     pub transport_size_type: DataTransportSize,
-    // Data Length * 8 (if not bit or timer or
-    // counter)
+    // 位查询,返回长度为0x0001; 非位查询,长度须左移3位
     pub length: u16,
     pub data: Vec<u8>,
 }
@@ -720,7 +717,7 @@ impl DataItemVal {
             return_code,
             transport_size_type:
                 DataTransportSize::NoBit,
-            length: (data.len() as u16) * 8,
+            length: (data.len() as u16) << 3,
             data: data.to_vec(),
         }
     }
@@ -733,7 +730,7 @@ impl DataItemVal {
             return_code,
             transport_size_type:
                 DataTransportSize::Bit,
-            length: 8,
+            length: 1,
             data: if data {
                 vec![1]
             } else {
@@ -773,7 +770,14 @@ impl DataItemVal {
         let transport_size_type =
             DataTransportSize::from(src.get_u8());
         let length = src.get_u16();
-        let bytes_len = length as usize;
+        let mut bytes_len = length as usize;
+
+        if transport_size_type
+            == DataTransportSize::NoBit
+        {
+            bytes_len >>= 3;
+        }
+
         let fill_byte_len = bytes_len % 2;
         if src.len() < bytes_len {
             return Err(Error::Error(
@@ -877,16 +881,6 @@ pub enum TransportSize {
     #[num_enum(catch_all)]
     NotSupport(u8),
 }
-/*
-impl TransportSize {
-    pub fn to_u8(&self) -> u8 {
-        match *self {
-            TransportSize::Bit => TRANS_SIZE_BIT,
-            _ => TRANS_SIZE_NOBIT,
-        }
-    }
-}
-*/
 
 #[derive(
     Debug,
