@@ -671,7 +671,7 @@ impl ItemRequest {
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct DataItemWriteResponse {
-    return_code: ReturnCode,
+    pub return_code: ReturnCode,
 }
 
 impl DataItemWriteResponse {
@@ -699,7 +699,7 @@ impl DataItemWriteResponse {
         })
     }
 }
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DataItemVal {
     pub return_code: ReturnCode,
     pub transport_size_type: DataTransportSize,
@@ -803,6 +803,7 @@ impl DataItemVal {
 
 #[derive(
     Debug,
+    Clone,
     IntoPrimitive,
     TryFromPrimitive,
     Eq,
@@ -826,6 +827,12 @@ pub enum ReturnCode {
     Err = 0x0a,
     /// Success
     Success = 0xff,
+}
+
+impl ReturnCode {
+    pub fn is_ok(&self) -> bool {
+        *self == ReturnCode::Success
+    }
 }
 
 #[derive(

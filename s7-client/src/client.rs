@@ -187,7 +187,7 @@ impl S7Client {
     pub async fn read(
         &mut self,
         area: &Area,
-    ) -> Result<Vec<DataItemVal>> {
+    ) -> Result<DataItemVal> {
         let frame = build_framed_s7_read(
             &self.options,
             &[*area],
@@ -206,7 +206,19 @@ impl S7Client {
                 if let AckData::ReadVar(data) =
                     ack_data
                 {
-                    return Ok(data.data_item());
+                    let data_item =
+                        data.data_item();
+                    if data_item.len() != 1 {
+                        return Err(Error::Err(format!(
+                            "should recv one item, \
+                             but recv {}",
+                            data_item.len()
+                        )));
+                    }
+
+                    return Ok(
+                        data_item[0].clone()
+                    );
                 }
             }
         }

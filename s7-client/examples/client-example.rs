@@ -1,10 +1,12 @@
+use std::net::IpAddr;
+
 use anyhow::Result;
-use log::debug;
+use log::{debug, info};
+
 use s7_client::{
     ConnectMode, ConnectionType, Options,
     S7Client,
 };
-use std::net::IpAddr;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -25,61 +27,75 @@ async fn main() -> Result<()> {
     let mut client =
         S7Client::connect(options).await?;
 
-    for rs in client
-        .write_db_bit(1, 200, 1, true)
-        .await?
-    {
-        println!("{:?}", rs);
-    }
-    // for rs in client
-    //     .write_db_bytes(1, 100, [10, 20].as_ref())
-    //     .await?
-    // {
-    //     println!("{:?}", rs);
-    // }
+    test_db_write(&mut client).await?;
 
-    /*
-    let area0 = s7_client::Area::DataBausteine(
+    test_process_output(&mut client).await?;
+
+    info!("all test pass");
+
+    Ok(())
+}
+
+async fn test_db_write(
+    client: &mut S7Client,
+) -> Result<()> {
+    // write bit6 = 1
+    let resp = client
+        .write_db_bit(1, 0, 6, true)
+        .await?;
+
+    assert_eq!(resp.len(), 1);
+    assert!(resp[0].return_code.is_ok());
+
+    // check bit6 = 1
+    let area = s7_client::Area::DataBausteine(
         1,
-        s7_client::DataSizeType::Byte {
-            addr: 0,
-            len: 1,
-        },
-    );
-    let area1 = s7_client::Area::DataBausteine(
-        1,
-        s7_client::DataSizeType::Word {
-            addr: 0,
-            len: 2,
-        },
-    );
-    let area2 = s7_client::Area::ProcessOutput(
-        s7_client::DataSizeType::Byte {
-            addr: 0,
-            len: 1,
-        },
-    );
-    */
-    let area3 = s7_client::Area::ProcessInput(
         s7_client::DataSizeType::Bit {
             addr: 0,
-            bit_addr: s7_client::BitAddr::Addr1,
+            bit_addr: s7_client::BitAddr::Addr6,
         },
     );
-    // let area4 = s7_client::Area::ProcessInput(
-    //     s7_client::DataSizeType::Byte {
-    //         addr: 0,
-    //         len: 1,
-    //     },
-    // );
-    let ack = client
-        .read(vec![
-            /*area0, area1, area2, */ area3,
-        ])
+
+    let item = client.read(&area).await?;
+    assert_eq!(item.data, &[1]);
+
+    // write bytes = [1,2,3,4]
+    let resp = client
+        .write_db_bytes(1, 100, &[1, 2, 3, 4])
         .await?;
-    for data in ack {
-        debug!("{:?}", data);
+    assert_eq!(resp.len(), 1);
+    assert!(resp[0].return_code.is_ok());
+
+    // db read
+    let area = s7_client::Area::DataBausteine(
+        1,
+        s7_client::DataSizeType::Byte {
+            addr: 100,
+            len: 4,
+        },
+    );
+    let resp = client.read(&area).await?;
+    assert_eq!(resp.data, &[1, 2, 3, 4]);
+
+    Ok(())
+}
+
+async fn test_process_output(
+    _client: &mut S7Client,
+) -> Result<()> {
+    // Q read
+    /*
+    let area = s7_client::Area::ProcessOutput(
+        s7_client::DataSizeType::Bit {
+            addr: 0,
+            bit_addr: s7_client::BitAddr::Addr0,
+        },
+    );
+
+    for rs in client.read(&area).await? {
+        println!("{:?}", rs);
     }
+    */
 
     Ok(())
 }
