@@ -2,7 +2,7 @@ use crate::{codec::S7Encoder, error::*};
 use bytes::BytesMut;
 use copt::CoptFrame;
 use s7_comm::{
-    DataItemVal, ItemRequest, ReturnCode,
+    Area, DataItemVal, ItemRequest, ReturnCode,
 };
 use tokio_util::codec::Encoder;
 use tpkt::TpktFrame;
@@ -29,6 +29,7 @@ impl S7WriteBuilder {
         self
     }
 
+    /*
     // todo 增加其他类型。应该也可以再抽象
     pub fn write_db_bytes(
         self,
@@ -59,6 +60,46 @@ impl S7WriteBuilder {
     ) -> Self {
         let req = ItemRequest::init_db_bit(
             db_number, byte_addr, bit_addr,
+        );
+        let data_val = DataItemVal::init_with_bit(
+            ReturnCode::Reserved,
+            data,
+        );
+        self.add_item((req, data_val))
+    }
+    */
+
+    pub fn write_bytes(
+        self,
+        db_number: Option<u16>,
+        area: Area,
+        byte_addr: u16,
+        data: &[u8],
+    ) -> Self {
+        let req = ItemRequest::init_byte(
+            db_number,
+            area,
+            byte_addr,
+            data.len() as u16,
+        );
+        let data_val =
+            DataItemVal::init_with_bytes(
+                ReturnCode::Reserved,
+                data,
+            );
+        self.add_item((req, data_val))
+    }
+
+    pub fn write_bit(
+        self,
+        db_number: Option<u16>,
+        area: Area,
+        byte_addr: u16,
+        bit_addr: u8,
+        data: bool,
+    ) -> Self {
+        let req = ItemRequest::init_bit(
+            db_number, area, byte_addr, bit_addr,
         );
         let data_val = DataItemVal::init_with_bit(
             ReturnCode::Reserved,

@@ -560,6 +560,7 @@ impl ItemRequest {
         }
     }
 
+    /*
     pub fn init_db_byte(
         db_number: u16,
         byte_addr: u16,
@@ -604,6 +605,65 @@ impl ItemRequest {
                 db_number,
             ),
             area: Area::DataBlocks,
+            address: Address {
+                byte_addr,
+                bit_addr,
+            },
+        }
+    }
+    */
+
+    pub fn init_byte(
+        db_number: Option<u16>,
+        area: Area,
+        byte_addr: u16,
+        length: u16,
+    ) -> Self {
+        let db_number = match db_number {
+            Some(x) => DbNumber::DbNumber(x),
+            None => DbNumber::NotIn,
+        };
+
+        Self {
+            variable_specification:
+                PARAM_ITEM_VAR_SPEC,
+            follow_length:
+                PARAM_ITEM_VAR_SPEC_LENGTH,
+            syntax_id: Syntax::S7Any,
+            transport_size_type:
+                TransportSize::NoBit,
+            length,
+            db_number,
+            area,
+            address: Address {
+                byte_addr,
+                bit_addr: 0,
+            },
+        }
+    }
+
+    pub fn init_bit(
+        db_number: Option<u16>,
+        area: Area,
+        byte_addr: u16,
+        bit_addr: u8,
+    ) -> Self {
+        let db_number = match db_number {
+            Some(x) => DbNumber::DbNumber(x),
+            None => DbNumber::NotIn,
+        };
+
+        Self {
+            variable_specification:
+                PARAM_ITEM_VAR_SPEC,
+            follow_length:
+                PARAM_ITEM_VAR_SPEC_LENGTH,
+            syntax_id: Syntax::S7Any,
+            transport_size_type:
+                TransportSize::Bit,
+            length: 1,
+            db_number,
+            area,
             address: Address {
                 byte_addr,
                 bit_addr,
@@ -669,7 +729,7 @@ impl ItemRequest {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DataItemWriteResponse {
     pub return_code: ReturnCode,
 }

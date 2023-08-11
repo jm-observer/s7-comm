@@ -8,13 +8,13 @@ use tpkt::TpktFrame;
 #[derive(Default)]
 pub struct S7ReadBuilder {
     pdu_ref: u16,
-    items:   Vec<ItemRequest>
+    items: Vec<ItemRequest>,
 }
 
 impl S7ReadBuilder {
     pub fn pdu_ref(
         mut self,
-        pdu_ref: u16
+        pdu_ref: u16,
     ) -> Self {
         self.pdu_ref = pdu_ref;
         self
@@ -22,12 +22,13 @@ impl S7ReadBuilder {
 
     pub fn add_item(
         mut self,
-        item: ItemRequest
+        item: ItemRequest,
     ) -> Self {
         self.items.push(item);
         self
     }
 
+    /*
     pub fn read_db_bytes(
         self,
         db_number: u16,
@@ -39,11 +40,12 @@ impl S7ReadBuilder {
         );
         self.add_item(req)
     }
+    */
 
     pub fn build(self) -> Result<BytesMut> {
         let mut read_builder =
             s7_comm::Frame::job_read_var(
-                self.pdu_ref
+                self.pdu_ref,
             );
 
         for item in self.items {
@@ -52,9 +54,9 @@ impl S7ReadBuilder {
         }
         let frame = TpktFrame::new(
             CoptFrame::builder_of_dt_data(
-                read_builder.build()
+                read_builder.build(),
             )
-            .build(0, true)
+            .build(0, true),
         );
         let mut dst = BytesMut::new();
         let mut encoder = S7Encoder::default();

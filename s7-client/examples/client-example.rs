@@ -12,6 +12,8 @@ use s7_client::{
 async fn main() -> Result<()> {
     custom_utils::logger::logger_stdout_debug();
 
+    debug!("start test");
+
     let address: IpAddr =
         "192.168.199.3".parse()?;
 
@@ -41,11 +43,16 @@ async fn test_db_write(
 ) -> Result<()> {
     // write bit6 = 1
     let resp = client
-        .write_db_bit(1, 0, 6, true)
+        .write_bit(
+            Some(1),
+            s7_comm::Area::DataBlocks,
+            0,
+            6,
+            true,
+        )
         .await?;
 
-    assert_eq!(resp.len(), 1);
-    assert!(resp[0].return_code.is_ok());
+    assert!(resp.return_code.is_ok());
 
     // check bit6 = 1
     let area = s7_client::Area::DataBausteine(
@@ -61,10 +68,14 @@ async fn test_db_write(
 
     // write bytes = [1,2,3,4]
     let resp = client
-        .write_db_bytes(1, 100, &[1, 2, 3, 4])
+        .write_bytes(
+            Some(1),
+            s7_comm::Area::DataBlocks,
+            100,
+            &[1, 2, 3, 4],
+        )
         .await?;
-    assert_eq!(resp.len(), 1);
-    assert!(resp[0].return_code.is_ok());
+    assert!(resp.return_code.is_ok());
 
     // db read
     let area = s7_client::Area::DataBausteine(
@@ -81,9 +92,19 @@ async fn test_db_write(
 }
 
 async fn test_process_output(
-    _client: &mut S7Client,
+    client: &mut S7Client,
 ) -> Result<()> {
-    // Q read
+    let rs = client
+        .write_bit(
+            None,
+            s7_comm::Area::ProcessInput,
+            0,
+            4,
+            true,
+        )
+        .await?;
+    assert!(rs.return_code.is_ok());
+
     /*
     let area = s7_client::Area::ProcessOutput(
         s7_client::DataSizeType::Bit {

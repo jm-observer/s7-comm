@@ -120,6 +120,7 @@ impl S7Client {
         Ok(())
     }
 
+    /*
     pub async fn write_db_bytes(
         &mut self,
         db_number: u16,
@@ -155,6 +156,62 @@ impl S7Client {
             )
             .build()?;
         self.write(frame).await
+    }
+    */
+
+    pub async fn write_bytes(
+        &mut self,
+        db_number: Option<u16>,
+        area: s7_comm::Area,
+        byte_addr: u16,
+        data: &[u8],
+    ) -> Result<DataItemWriteResponse> {
+        let frame = build_s7_write()
+            .pdu_ref(
+                self.options.tpdu_size.pdu_ref(),
+            )
+            .write_bytes(
+                db_number, area, byte_addr, data,
+            )
+            .build()?;
+
+        let items = self.write(frame).await?;
+        if items.len() == 1 {
+            Ok(items[0].clone())
+        } else {
+            Err(Error::Err(format!(
+                "read bytes items.len={} != 1",
+                items.len()
+            )))
+        }
+    }
+
+    pub async fn write_bit(
+        &mut self,
+        db_number: Option<u16>,
+        area: s7_comm::Area,
+        byte_addr: u16,
+        bit_addr: u8,
+        data: bool,
+    ) -> Result<DataItemWriteResponse> {
+        let frame = build_s7_write()
+            .pdu_ref(
+                self.options.tpdu_size.pdu_ref(),
+            )
+            .write_bit(
+                db_number, area, byte_addr,
+                bit_addr, data,
+            )
+            .build()?;
+        let items = self.write(frame).await?;
+        if items.len() == 1 {
+            Ok(items[0].clone())
+        } else {
+            Err(Error::Err(format!(
+                "read bit items.len={} != 1",
+                items.len()
+            )))
+        }
     }
 
     async fn write(

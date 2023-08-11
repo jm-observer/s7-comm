@@ -1,17 +1,18 @@
 use crate::packet::{
-    Frame, Header, ItemRequest, Job, ReadVarJob
+    Frame, Header, ItemRequest, Job, ReadVarJob,
 };
+use crate::Area;
 
 #[derive(Default)]
 pub struct FrameJobReadVarBuilder {
     pdu_ref: u16,
-    items:   Vec<ItemRequest>
+    items: Vec<ItemRequest>,
 }
 
 impl FrameJobReadVarBuilder {
     pub fn pdu_ref(
         mut self,
-        pdu_ref: u16
+        pdu_ref: u16,
     ) -> Self {
         self.pdu_ref = pdu_ref;
         self
@@ -19,20 +20,21 @@ impl FrameJobReadVarBuilder {
 
     pub fn add_item(
         mut self,
-        item: ItemRequest
+        item: ItemRequest,
     ) -> Self {
         self.items.push(item);
         self
     }
 
-    pub fn read_db_bytes(
+    pub fn read_bytes(
         self,
-        db_number: u16,
+        db_number: Option<u16>,
+        area: Area,
         byte_addr: u16,
-        len: u16
+        len: u16,
     ) -> Self {
-        let req = ItemRequest::init_db_byte(
-            db_number, byte_addr, 0, len
+        let req = ItemRequest::init_byte(
+            db_number, area, byte_addr, len,
         );
         self.add_item(req)
     }
@@ -45,7 +47,7 @@ impl FrameJobReadVarBuilder {
             |mut job, item| {
                 job.add_item(item);
                 job
-            }
+            },
         );
 
         let data_len = job.bytes_len_data();
@@ -54,7 +56,7 @@ impl FrameJobReadVarBuilder {
         let header = Header::init(
             pdu_ref,
             parameter_len,
-            data_len
+            data_len,
         );
 
         let job = Job::ReadVar(job);
