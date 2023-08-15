@@ -16,7 +16,7 @@ include = [
 [dependencies]
 bytes = "1.4.0"
 log = "0.4.17"
-s7-comm = "0.1.2"
+s7-comm = { path = "../s7-comm" }
 copt = "0.1.0"
 tpkt = "0.1.0"
 thiserror = "1.0.40"

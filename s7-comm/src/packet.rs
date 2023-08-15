@@ -518,9 +518,12 @@ impl SetupCommunication {
         self.pdu_length
     }
 }
+
+const PARAM_ITEM_VAR_SPEC: u8 = 0x12;
+const PARAM_ITEM_VAR_SPEC_LENGTH: u8 = 0x0a;
+
 #[derive(Debug, Eq, PartialEq)]
 pub struct ItemRequest {
-    /// always = 0x12?
     variable_specification: u8,
     follow_length: u8,
     syntax_id: Syntax,
@@ -541,8 +544,10 @@ impl ItemRequest {
         length: u16,
     ) -> Self {
         Self {
-            variable_specification: 0x12,
-            follow_length: 10,
+            variable_specification:
+                PARAM_ITEM_VAR_SPEC,
+            follow_length:
+                PARAM_ITEM_VAR_SPEC_LENGTH,
             syntax_id: Syntax::S7Any,
             transport_size_type,
             length,
@@ -555,6 +560,7 @@ impl ItemRequest {
         }
     }
 
+    /*
     pub fn init_db_byte(
         db_number: u16,
         byte_addr: u16,
@@ -562,11 +568,13 @@ impl ItemRequest {
         length: u16,
     ) -> Self {
         Self {
-            variable_specification: 0x12,
-            follow_length: 10,
+            variable_specification:
+                PARAM_ITEM_VAR_SPEC,
+            follow_length:
+                PARAM_ITEM_VAR_SPEC_LENGTH,
             syntax_id: Syntax::S7Any,
             transport_size_type:
-                TransportSize::Byte,
+                TransportSize::NoBit,
             length,
             db_number: DbNumber::DbNumber(
                 db_number,
@@ -583,19 +591,79 @@ impl ItemRequest {
         db_number: u16,
         byte_addr: u16,
         bit_addr: u8,
-        length: u16,
     ) -> Self {
         Self {
-            variable_specification: 0x12,
-            follow_length: 10,
+            variable_specification:
+                PARAM_ITEM_VAR_SPEC,
+            follow_length:
+                PARAM_ITEM_VAR_SPEC_LENGTH,
             syntax_id: Syntax::S7Any,
             transport_size_type:
                 TransportSize::Bit,
-            length,
+            length: 1,
             db_number: DbNumber::DbNumber(
                 db_number,
             ),
             area: Area::DataBlocks,
+            address: Address {
+                byte_addr,
+                bit_addr,
+            },
+        }
+    }
+    */
+
+    pub fn init_byte(
+        db_number: Option<u16>,
+        area: Area,
+        byte_addr: u16,
+        length: u16,
+    ) -> Self {
+        let db_number = match db_number {
+            Some(x) => DbNumber::DbNumber(x),
+            None => DbNumber::NotIn,
+        };
+
+        Self {
+            variable_specification:
+                PARAM_ITEM_VAR_SPEC,
+            follow_length:
+                PARAM_ITEM_VAR_SPEC_LENGTH,
+            syntax_id: Syntax::S7Any,
+            transport_size_type:
+                TransportSize::NoBit,
+            length,
+            db_number,
+            area,
+            address: Address {
+                byte_addr,
+                bit_addr: 0,
+            },
+        }
+    }
+
+    pub fn init_bit(
+        db_number: Option<u16>,
+        area: Area,
+        byte_addr: u16,
+        bit_addr: u8,
+    ) -> Self {
+        let db_number = match db_number {
+            Some(x) => DbNumber::DbNumber(x),
+            None => DbNumber::NotIn,
+        };
+
+        Self {
+            variable_specification:
+                PARAM_ITEM_VAR_SPEC,
+            follow_length:
+                PARAM_ITEM_VAR_SPEC_LENGTH,
+            syntax_id: Syntax::S7Any,
+            transport_size_type:
+                TransportSize::Bit,
+            length: 1,
+            db_number,
+            area,
             address: Address {
                 byte_addr,
                 bit_addr,
@@ -661,9 +729,9 @@ impl ItemRequest {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DataItemWriteResponse {
-    return_code: ReturnCode,
+    pub return_code: ReturnCode,
 }
 
 impl DataItemWriteResponse {
@@ -691,13 +759,11 @@ impl DataItemWriteResponse {
         })
     }
 }
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DataItemVal {
     pub return_code: ReturnCode,
-    /// always = 0x04?
-    pub transport_size_type: TransportSize,
-    // Data Length * 8 (if not bit or timer or
-    // counter)
+    pub transport_size_type: DataTransportSize,
+    // 位查询,返回长度为0x0001; 非位查询,长度须左移3位
     pub length: u16,
     pub data: Vec<u8>,
 }
@@ -710,8 +776,8 @@ impl DataItemVal {
         Self {
             return_code,
             transport_size_type:
-                TransportSize::Word,
-            length: (data.len() as u16) * 8,
+                DataTransportSize::NoBit,
+            length: (data.len() as u16) << 3,
             data: data.to_vec(),
         }
     }
@@ -723,8 +789,8 @@ impl DataItemVal {
         Self {
             return_code,
             transport_size_type:
-                TransportSize::Char,
-            length: 8,
+                DataTransportSize::Bit,
+            length: 1,
             data: if data {
                 vec![1]
             } else {
@@ -735,25 +801,6 @@ impl DataItemVal {
 
     pub fn bytes_len(&self) -> u16 {
         self.data.len() as u16 + 4
-    }
-
-    fn real_bytes_len(
-        transport_size_type: TransportSize,
-        length: u16,
-    ) -> usize {
-        if length == 0 {
-            return 0;
-        }
-        match transport_size_type {
-            TransportSize::Bit => length as usize,
-            TransportSize::Byte => {
-                (length / 8) as usize
-            },
-            _ => {
-                // todo ?
-                (length / 8) as usize
-            },
-        }
     }
 
     fn encode(self, dst: &mut BytesMut) {
@@ -781,12 +828,16 @@ impl DataItemVal {
         let return_code =
             ReturnCode::try_from(src.get_u8())?;
         let transport_size_type =
-            TransportSize::from(src.get_u8());
+            DataTransportSize::from(src.get_u8());
         let length = src.get_u16();
-        let bytes_len = Self::real_bytes_len(
-            transport_size_type,
-            length,
-        );
+        let mut bytes_len = length as usize;
+
+        if transport_size_type
+            == DataTransportSize::NoBit
+        {
+            bytes_len >>= 3;
+        }
+
         let fill_byte_len = bytes_len % 2;
         if src.len() < bytes_len {
             return Err(Error::Error(
@@ -812,6 +863,7 @@ impl DataItemVal {
 
 #[derive(
     Debug,
+    Clone,
     IntoPrimitive,
     TryFromPrimitive,
     Eq,
@@ -837,6 +889,12 @@ pub enum ReturnCode {
     Success = 0xff,
 }
 
+impl ReturnCode {
+    pub fn is_ok(&self) -> bool {
+        *self == ReturnCode::Success
+    }
+}
+
 #[derive(
     Debug,
     Copy,
@@ -846,57 +904,51 @@ pub enum ReturnCode {
     FromPrimitive,
     PartialEq,
 )]
-// #define S7COMM_DATA_TRANSPORT_SIZE_NULL     0
-// #define S7COMM_DATA_TRANSPORT_SIZE_BBIT     3
-// /* bit access, len is in bits */
-// #define S7COMM_DATA_TRANSPORT_SIZE_BBYTE    4
-// /* byte/word/dword access, len is in bits */
-// #define S7COMM_DATA_TRANSPORT_SIZE_BINT     5
-// /* integer access, len is in bits */
-// #define S7COMM_DATA_TRANSPORT_SIZE_BDINT    6
-// /* integer access, len is in bytes */
-// #define S7COMM_DATA_TRANSPORT_SIZE_BREAL    7
-// /* real access, len is in bytes */
-// #define S7COMM_DATA_TRANSPORT_SIZE_BSTR     9
-// /* octet string, len is in bytes */
-// #define S7COMM_DATA_TRANSPORT_SIZE_NCKADDR1 17
-// /* NCK address description, fixed length */
-// #define S7COMM_DATA_TRANSPORT_SIZE_NCKADDR2 18
-// /* NCK address description, fixed length */
+#[repr(u8)]
+pub enum TransportType {
+    Bit = 0,
+    Byte = 1,
+    Word = 2,
+    DWord = 3,
+    Float = 4,
+    #[num_enum(catch_all)]
+    NotSupport(u8),
+}
+
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    IntoPrimitive,
+    Eq,
+    FromPrimitive,
+    PartialEq,
+)]
+#[repr(u8)]
+pub enum DataTransportSize {
+    Bit = 0x03,
+    NoBit = 0x04,
+    #[num_enum(catch_all)]
+    NotSupport(u8),
+}
+
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    IntoPrimitive,
+    Eq,
+    FromPrimitive,
+    PartialEq,
+)]
 #[repr(u8)]
 pub enum TransportSize {
     Bit = 0x01,
-    Byte = 0x02,
-    Char = 0x03,
-    Word = 0x04,
-    Int = 0x05,
-    DWord = 0x06,
-    DInt = 0x07,
-    Real = 0x08,
-    Counter = 0x1C,
-    Timer = 0x1D,
+    NoBit = 0x02,
     #[num_enum(catch_all)]
     NotSupport(u8),
-    // Null = 0x00,
-    // /// bit access, len is in bits
-    // Bit = 0x03,
-    // /// byte/word/dword access, len is in bits?
-    // Byte = 0x04,
-    // /// integer access, len is in bits
-    // Int = 0x05,
-    // /// integer access, len is in bytes
-    // Dint = 0x06,
-    // /// real access, len is in bytes
-    // Real = 0x07,
-    // /// octet string, len is in bytes
-    // Str = 0x09,
-    // /// NCK address description, fixed length
-    // NckAddr1 = 0x1C,
-    // /// NCK address description, fixed length
-    // NckAddr2 = 0x12,
-    // #[num_enum(catch_all)]
-    // NotSupport(u8),
 }
+
 #[derive(
     Debug,
     IntoPrimitive,
@@ -908,8 +960,8 @@ pub enum TransportSize {
 pub enum Area {
     ProcessInput = 0x81,
     ProcessOutput = 0x82,
-    DataBlocks = 0x84,
     Merker = 0x83,
+    DataBlocks = 0x84,
     Counter = 0x1c,
     Timer = 0x1d,
     #[num_enum(catch_all)]
